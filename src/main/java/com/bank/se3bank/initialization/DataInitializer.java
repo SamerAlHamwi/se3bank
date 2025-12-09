@@ -28,6 +28,7 @@ import java.util.List;
 import java.util.Set;
 
 @Component
+@org.springframework.context.annotation.Profile("!test")
 @RequiredArgsConstructor
 @Slf4j
 public class DataInitializer implements CommandLineRunner {

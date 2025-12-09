@@ -38,8 +38,13 @@ public class JwtUtil {
     }
 
     public boolean isTokenValid(String token, UserDetails userDetails) {
-        final String username = extractUsername(token);
-        return username.equals(userDetails.getUsername()) && !isTokenExpired(token);
+        try {
+            final String username = extractUsername(token);
+            return username.equals(userDetails.getUsername()) && !isTokenExpired(token);
+        } catch (Exception ex) {
+            log.debug("JWT validation failed: {}", ex.getMessage());
+            return false;
+        }
     }
 
     public String extractUsername(String token) {

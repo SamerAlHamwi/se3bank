@@ -171,15 +171,15 @@ public class TransactionService {
         
         Transaction transaction = transactionRepository.findById(transactionId)
                 .orElseThrow(() -> new IllegalArgumentException("المعاملة غير موجودة"));
-        
-        if (!transaction.requiresApproval()) {
-            throw new IllegalStateException("المعاملة لا تتطلب اعتماداً");
-        }
-        
+
         // التحقق من أن المستخدم مدير
         User manager = userService.getUserById(managerId);
         if (!manager.hasRole(com.bank.se3bank.shared.enums.Role.ROLE_MANAGER)) {
             throw new SecurityException("المستخدم ليس مديراً");
+        }
+
+        if (!transaction.requiresApproval()) {
+            throw new IllegalStateException("المعاملة لا تتطلب اعتماداً");
         }
         
         // استخدام ManagerApprovalHandler
@@ -207,15 +207,15 @@ public class TransactionService {
         
         Transaction transaction = transactionRepository.findById(transactionId)
                 .orElseThrow(() -> new IllegalArgumentException("المعاملة غير موجودة"));
-        
-        if (!transaction.requiresApproval()) {
-            throw new IllegalStateException("المعاملة لا تتطلب اعتماداً");
-        }
-        
+
         // التحقق من أن المستخدم مدير
         User manager = userService.getUserById(managerId);
         if (!manager.hasRole(com.bank.se3bank.shared.enums.Role.ROLE_MANAGER)) {
             throw new SecurityException("المستخدم ليس مديراً");
+        }
+
+        if (!transaction.requiresApproval()) {
+            throw new IllegalStateException("المعاملة لا تتطلب اعتماداً");
         }
         
         // استخدام ManagerApprovalHandler
