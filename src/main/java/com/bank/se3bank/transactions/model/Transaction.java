@@ -69,6 +69,9 @@ public class Transaction {
     @Column(name = "metadata", columnDefinition = "TEXT")
     private String metadata; // JSON string for additional data
     
+    @Column(name = "approval_chain_log", columnDefinition = "TEXT")
+    private String approvalChainLog; // سجل سلسلة الاعتماد
+    
     @PrePersist
     public void generateTransactionId() {
         if (this.transactionId == null) {
@@ -92,7 +95,23 @@ public class Transaction {
         this.status = TransactionStatus.PENDING_APPROVAL;
     }
     
+    public void markAsCancelled() {
+        this.status = TransactionStatus.CANCELLED;
+        this.processedAt = LocalDateTime.now();
+    }
+    
     public boolean requiresApproval() {
         return this.status == TransactionStatus.PENDING_APPROVAL;
+    }
+    
+    public void addToApprovalChainLog(String handlerName, String message) {
+        String logEntry = String.format("[%s] %s: %s\n", 
+                LocalDateTime.now(), handlerName, message);
+        
+        if (this.approvalChainLog == null) {
+            this.approvalChainLog = logEntry;
+        } else {
+            this.approvalChainLog += logEntry;
+        }
     }
 }

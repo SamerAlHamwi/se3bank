@@ -16,4 +16,18 @@ public enum TransactionStatus {
     public String getArabicName() {
         return arabicName;
     }
+
+    /**
+     * التحقق إذا كانت الحالة نهائية
+     */
+    public boolean isFinal() {
+        return this == COMPLETED || this == FAILED || this == CANCELLED;
+    }
+    
+    /**
+     * التحقق إذا كانت الحالة معلقة
+     */
+    public boolean isPending() {
+        return this == PENDING || this == PENDING_APPROVAL;
+    }
 }

@@ -1,10 +1,22 @@
 // 📁 src/main/java/com/bank/se3bank/initialization/DataInitializer.java
 package com.bank.se3bank.initialization;
 
+import com.bank.se3bank.accounts.model.Account;
+import com.bank.se3bank.accounts.model.AccountGroup;
 import com.bank.se3bank.accounts.service.AccountService;
+import com.bank.se3bank.accounts.service.DecoratorService;
+import com.bank.se3bank.accounts.service.GroupService;
+import com.bank.se3bank.facade.BankFacade;
+import com.bank.se3bank.interest.service.InterestService;
+import com.bank.se3bank.notifications.service.NotificationService;
+import com.bank.se3bank.shared.dto.AddDecoratorRequest;
 import com.bank.se3bank.shared.dto.CreateAccountRequest;
+import com.bank.se3bank.shared.dto.CreateGroupRequest;
+import com.bank.se3bank.shared.dto.OpenAccountRequest;
+import com.bank.se3bank.shared.dto.TransferRequest;
 import com.bank.se3bank.shared.enums.AccountType;
 import com.bank.se3bank.shared.enums.Role;
+import com.bank.se3bank.transactions.service.TransactionService;
 import com.bank.se3bank.users.model.User;
 import com.bank.se3bank.users.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -12,6 +24,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.Set;
 
 @Component
@@ -21,6 +34,12 @@ public class DataInitializer implements CommandLineRunner {
 
     private final UserService userService;
     private final AccountService accountService;
+    private final GroupService groupService;
+    private final DecoratorService decoratorService;
+    private final BankFacade bankFacade;
+    private final NotificationService notificationService;
+    private final TransactionService transactionService;
+    private final InterestService interestService;
 
     @Override
     public void run(String... args) {
@@ -29,6 +48,12 @@ public class DataInitializer implements CommandLineRunner {
         try {
             initializeUsers();
             initializeAccounts();
+            initializeGroups();
+            initializeDecorators();
+            testFacadeOperations();
+            testNotifications();
+            testTransactions();
+            initializeInterestStrategies();
             
             log.info("✅ تم تهيئة البيانات الأولية بنجاح!");
         } catch (Exception e) {
@@ -148,4 +173,218 @@ public class DataInitializer implements CommandLineRunner {
 
         log.info("✅ تم إنشاء 4 حسابات افتراضية");
     }
+
+    private void initializeGroups() {
+        log.info("🏢 إنشاء مجموعات حسابات افتراضية (Composite Pattern)...");
+        
+        User customer1 = userService.getUserByUsername("customer1");
+        
+        // إنشاء مجموعة حسابات عائلية
+        CreateGroupRequest familyGroupRequest = new CreateGroupRequest();
+        familyGroupRequest.setGroupName("الحسابات العائلية");
+        familyGroupRequest.setDescription("جميع حسابات العائلة");
+        familyGroupRequest.setGroupType("FAMILY");
+        familyGroupRequest.setOwnerId(customer1.getId());
+        familyGroupRequest.setMaxAccounts(10);
+        
+        AccountGroup familyGroup = groupService.createGroup(familyGroupRequest);
+        
+        // إضافة حسابات العميل إلى المجموعة
+        List<Account> customerAccounts = accountService.getUserAccounts(customer1.getId());
+        for (Account account : customerAccounts) {
+            groupService.addAccountToGroup(familyGroup.getId(), account.getId());
+        }
+        
+        log.info("✅ تم إنشاء مجموعة حسابات عائلية تحتوي على {} حساب", 
+                familyGroup.getChildCount());
+    }
+    
+    private void initializeDecorators() {
+    log.info("🎨 إضافة ديكورات افتراضية (Decorator Pattern)...");
+    
+    try {
+        // الحصول على حساب توفير للعميل الأول
+        List<Account> customer1Accounts = accountService.getUserAccounts(
+            userService.getUserByUsername("customer1").getId()
+        );
+        
+        if (!customer1Accounts.isEmpty()) {
+            Account firstAccount = customer1Accounts.get(0);
+            
+            // إضافة حماية السحب على المكشوف
+            AddDecoratorRequest overdraftRequest = new AddDecoratorRequest();
+            overdraftRequest.setDecoratorType("OVERDRAFT_PROTECTION");
+            overdraftRequest.setAccountId(firstAccount.getId());
+            overdraftRequest.setOverdraftLimit(1000.0);
+            overdraftRequest.setDescription("حماية السحب على المكشوف لحد 1000");
+            
+            decoratorService.addDecorator(overdraftRequest);
+            
+            // إضافة خدمات مميزة
+            AddDecoratorRequest premiumRequest = new AddDecoratorRequest();
+            premiumRequest.setDecoratorType("PREMIUM_SERVICES");
+            premiumRequest.setAccountId(firstAccount.getId());
+            premiumRequest.setTierLevel("GOLD");
+            premiumRequest.setDescription("خدمات ذهبية مميزة");
+            
+            decoratorService.addDecorator(premiumRequest);
+            
+            log.info("✅ تم إضافة ديكورات للحساب: {}", firstAccount.getAccountNumber());
+        }
+        } catch (Exception e) {
+            log.warn("⚠️  تعذر إضافة ديكورات: {}", e.getMessage());
+        }
+    }
+
+    private void testFacadeOperations() {
+        log.info("🏦 اختبار عمليات Facade Pattern...");
+        
+        try {
+            // الحصول على مستخدم اختبار
+            var users = userService.getAllUsers();
+            if (users.size() >= 2) {
+                var customer1 = users.get(3); // customer1
+                var customer2 = users.get(4); // customer2
+                
+                // اختبار فتح حساب باستخدام Facade
+                OpenAccountRequest openRequest = new OpenAccountRequest();
+                openRequest.setUserId(customer1.getId());
+                openRequest.setAccountType(AccountType.SAVINGS);
+                openRequest.setInitialBalance(5000.0);
+                
+                var openResponse = bankFacade.openNewAccount(openRequest);
+                log.info("✅ فتح حساب باستخدام Facade: {}", openResponse.getAccountNumber());
+                
+                // اختبار التحويل باستخدام Facade
+                var accounts = accountService.getUserAccounts(customer1.getId());
+                if (accounts.size() >= 2) {
+                    TransferRequest transferRequest = new TransferRequest();
+                    transferRequest.setFromAccountNumber(accounts.get(0).getAccountNumber());
+                    transferRequest.setToAccountNumber(accounts.get(1).getAccountNumber());
+                    transferRequest.setAmount(100.0);
+                    transferRequest.setDescription("اختبار Facade");
+                    
+                    var transferResponse = bankFacade.transferMoney(transferRequest);
+                    log.info("✅ تحويل باستخدام Facade: {}", transferResponse.getTransactionId());
+                }
+            }
+        } catch (Exception e) {
+            log.warn("⚠️  تعذر اختبار Facade: {}", e.getMessage());
+        }
+    }
+    private void testNotifications() {
+        log.info("🔔 اختبار نظام الإشعارات (Observer Pattern)...");
+        
+        try {
+            var users = userService.getAllUsers();
+            if (!users.isEmpty()) {
+                var customer = users.get(3); // customer1
+                
+                // اختبار إرسال إشعار تجريبي
+                notificationService.sendCustomNotification(
+                        customer,
+                        "🎉 مرحباً بك في SE3 Bank",
+                        "يسرنا انضمامك إلى عائلة SE3 Bank. يمكنك الآن الاستفادة من جميع خدماتنا المصرفية المتقدمة.",
+                        "IN_APP",
+                        "WELCOME"
+                );
+                
+                log.info("✅ تم إرسال إشعار ترحيبي للمستخدم: {}", customer.getUsername());
+            }
+        } catch (Exception e) {
+            log.warn("⚠️ تعذر اختبار الإشعارات: {}", e.getMessage());
+        }
+    }
+
+    private void testTransactions() {
+        log.info("💸 اختبار نظام المعاملات (Chain of Responsibility)...");
+        
+        try {
+            var users = userService.getAllUsers();
+            if (users.size() >= 2) {
+                var customer1 = users.get(3); // customer1
+                var customer2 = users.get(4); // customer2
+                
+                // الحصول على حسابات العملاء
+                var customer1Accounts = accountService.getUserAccounts(customer1.getId());
+                var customer2Accounts = accountService.getUserAccounts(customer2.getId());
+                
+                if (!customer1Accounts.isEmpty() && !customer2Accounts.isEmpty()) {
+                    var account1 = customer1Accounts.get(0);
+                    var account2 = customer2Accounts.get(0);
+                    
+                    // اختبار معاملة تحويل صغيرة (يجب أن تمر تلقائياً)
+                    log.info("🔄 اختبار تحويل صغير (يجب أن يمر تلقائياً)...");
+                    var smallTransfer = transactionService.createTransaction(
+                            account1, account2, 100.0, "اختبار تحويل صغير");
+                    log.info("💰 نتيجة التحويل الصغير: {}", smallTransfer.getStatus());
+                    
+                    // اختبار معاملة كبيرة (يجب أن تنتظر اعتماد مدير)
+                    log.info("🔄 اختبار تحويل كبير (يجب أن ينتظر اعتماد)...");
+                    var largeTransfer = transactionService.createTransaction(
+                            account1, account2, 15000.0, "اختبار تحويل كبير");
+                    log.info("💰 نتيجة التحويل الكبير: {}", largeTransfer.getStatus());
+                    
+                    // اختبار سحب
+                    log.info("💰 اختبار سحب...");
+                    var withdrawal = transactionService.createWithdrawalTransaction(
+                            account1, 500.0, "اختبار سحب");
+                    log.info("💰 نتيجة السحب: {}", withdrawal.getStatus());
+                    
+                    // اختبار إيداع
+                    log.info("📥 اختبار إيداع...");
+                    var deposit = transactionService.createDepositTransaction(
+                            account2, 1000.0, "اختبار إيداع");
+                    log.info("📥 نتيجة الإيداع: {}", deposit.getStatus());
+                }
+            }
+        } catch (Exception e) {
+            log.warn("⚠️ تعذر اختبار المعاملات: {}", e.getMessage());
+        }
+    }
+
+
+
+    private void initializeInterestStrategies() {
+        log.info("📈 تعيين استراتيجيات فائدة للحسابات الافتراضية...");
+        
+        try {
+            var users = userService.getAllUsers();
+            if (!users.isEmpty()) {
+                var customer1 = users.get(3); // customer1
+                var accounts = accountService.getUserAccounts(customer1.getId());
+                
+                if (!accounts.isEmpty()) {
+                    // تعيين استراتيجيات مختلفة للحسابات
+                    Account savingsAccount = accounts.stream()
+                            .filter(a -> a.getAccountType() == AccountType.SAVINGS)
+                            .findFirst()
+                            .orElse(null);
+                    
+                    if (savingsAccount != null) {
+                        interestService.changeAccountInterestStrategy(
+                                savingsAccount.getId(), "compoundInterestStrategy");
+                        log.info("✅ تعيين فائدة مركبة لحساب التوفير: {}", 
+                                savingsAccount.getAccountNumber());
+                    }
+                    
+                    // حساب استثماري
+                    Account investmentAccount = accounts.stream()
+                            .filter(a -> a.getAccountType() == AccountType.INVESTMENT)
+                            .findFirst()
+                            .orElse(null);
+                    
+                    if (investmentAccount != null) {
+                        interestService.changeAccountInterestStrategy(
+                                investmentAccount.getId(), "tieredInterestStrategy");
+                        log.info("✅ تعيين فائدة متدرجة للحساب الاستثماري: {}", 
+                                investmentAccount.getAccountNumber());
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.warn("⚠️ تعذر تعيين استراتيجيات الفائدة: {}", e.getMessage());
+        }
+    }
+
 }

@@ -1,5 +1,7 @@
 package com.bank.se3bank.accounts.model;
 
+import java.util.List;
+
 import com.bank.se3bank.shared.enums.AccountType;
 import jakarta.persistence.*;
 import lombok.*;
@@ -56,5 +58,15 @@ public class SavingsAccount extends Account {
     
     public boolean canWithdrawThisMonth() {
         return withdrawalsThisMonth < monthlyWithdrawalLimit;
+    }
+    
+    @Override
+    public List<Account> getChildAccounts() {
+        return List.of(); // حساب فردي لا يحتوي على حسابات فرعية
+    }
+
+    @Override
+    public int getChildCount() {
+        return 0; // لا يوجد حسابات فرعية
     }
 }

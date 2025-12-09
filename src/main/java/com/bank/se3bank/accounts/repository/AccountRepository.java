@@ -32,4 +32,18 @@ public interface AccountRepository extends JpaRepository<Account, Long> {
     
     @Query("SELECT SUM(a.balance) FROM Account a WHERE a.user.id = :userId AND a.status = 'ACTIVE'")
     Double getTotalBalanceByUserId(@Param("userId") Long userId);
+
+    List<Account> findByStatus(AccountStatus status);
+
+    @Query("SELECT a FROM Account a WHERE " +
+        "LOWER(a.accountNumber) LIKE LOWER(CONCAT('%', :searchText, '%')) " +
+        "OR LOWER(a.user.username) LIKE LOWER(CONCAT('%', :searchText, '%')) " +
+        "OR LOWER(a.user.firstName) LIKE LOWER(CONCAT('%', :searchText, '%')) " +
+        "OR LOWER(a.user.lastName) LIKE LOWER(CONCAT('%', :searchText, '%'))")
+    List<Account> searchAccounts(@Param("searchText") String searchText);
+
+    // إضافة إذا لم تكن موجودة
+    @SuppressWarnings("null")
+    List<Account> findAll();
+    
 }

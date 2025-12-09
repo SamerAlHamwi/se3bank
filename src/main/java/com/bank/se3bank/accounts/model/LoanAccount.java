@@ -7,6 +7,7 @@ import lombok.*;
 import lombok.experimental.SuperBuilder;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @Entity
 @NoArgsConstructor(force = true)
@@ -83,5 +84,15 @@ public class LoanAccount extends Account {
         if (remainingAmount <= 0) {
             setStatus(AccountStatus.CLOSED);
         }
+    }
+
+    @Override
+    public List<Account> getChildAccounts() {
+        return List.of(); // حساب فردي لا يحتوي على حسابات فرعية
+    }
+
+    @Override
+    public int getChildCount() {
+        return 0; // لا يوجد حسابات فرعية
     }
 }
