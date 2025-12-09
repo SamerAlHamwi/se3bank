@@ -225,7 +225,7 @@ public class InterestService {
     private boolean isAccountEligibleForInterest(Account account) {
         // التحقق من أهلية الحساب للفائدة
         return account.getBalance() > 0 &&
-               account.getStatus() == AccountStatus.ACTIVE && // ✅ التصحيح هنا
+               account.getStatus() == AccountStatus.ACTIVE && 
                (account.getLastInterestCalculation() == null ||
                 account.getLastInterestCalculation().isBefore(LocalDateTime.now().minusDays(28)));
     }

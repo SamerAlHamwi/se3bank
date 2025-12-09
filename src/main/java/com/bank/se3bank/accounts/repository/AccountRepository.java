@@ -3,6 +3,8 @@ package com.bank.se3bank.accounts.repository;
 import com.bank.se3bank.accounts.model.Account;
 import com.bank.se3bank.shared.enums.AccountStatus;
 import com.bank.se3bank.shared.enums.AccountType;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -41,6 +43,13 @@ public interface AccountRepository extends JpaRepository<Account, Long> {
         "OR LOWER(a.user.firstName) LIKE LOWER(CONCAT('%', :searchText, '%')) " +
         "OR LOWER(a.user.lastName) LIKE LOWER(CONCAT('%', :searchText, '%'))")
     List<Account> searchAccounts(@Param("searchText") String searchText);
+
+    @Query("SELECT a FROM Account a WHERE " +
+        "LOWER(a.accountNumber) LIKE LOWER(CONCAT('%', :searchText, '%')) " +
+        "OR LOWER(a.user.username) LIKE LOWER(CONCAT('%', :searchText, '%')) " +
+        "OR LOWER(a.user.firstName) LIKE LOWER(CONCAT('%', :searchText, '%')) " +
+        "OR LOWER(a.user.lastName) LIKE LOWER(CONCAT('%', :searchText, '%'))")
+    Page<Account> searchAccounts(@Param("searchText") String searchText, Pageable pageable);
 
     // إضافة إذا لم تكن موجودة
     @SuppressWarnings("null")

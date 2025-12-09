@@ -16,7 +16,9 @@ public enum AccountStatus {
     public String getArabicName() {
         return arabicName;
     }
-
+    
+    // ========== Helper Methods ==========
+    
     /**
      * التحقق إذا كانت الحالة نشطة
      */
@@ -50,5 +52,30 @@ public enum AccountStatus {
      */
     public boolean isTerminal() {
         return this == CLOSED;
+    }
+    
+    /**
+     * الحصول على الحالة التالية المسموح بها
+     */
+    public AccountStatus[] getAllowedTransitions() {
+        return switch (this) {
+            case ACTIVE -> new AccountStatus[]{FROZEN, SUSPENDED, CLOSED};
+            case FROZEN -> new AccountStatus[]{ACTIVE, CLOSED};
+            case SUSPENDED -> new AccountStatus[]{ACTIVE, CLOSED};
+            case PENDING -> new AccountStatus[]{ACTIVE, CLOSED};
+            case CLOSED -> new AccountStatus[]{};
+        };
+    }
+    
+    /**
+     * التحقق من صحة الانتقال للحالة الجديدة
+     */
+    public boolean canTransitionTo(AccountStatus newStatus) {
+        for (AccountStatus allowed : getAllowedTransitions()) {
+            if (allowed == newStatus) {
+                return true;
+            }
+        }
+        return false;
     }
 }

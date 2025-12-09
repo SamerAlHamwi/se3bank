@@ -4,6 +4,8 @@ import com.bank.se3bank.transactions.model.Transaction;
 import com.bank.se3bank.shared.enums.AccountStatus;
 import com.bank.se3bank.shared.enums.AccountType;
 import com.bank.se3bank.users.model.User;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
@@ -21,6 +23,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @SuperBuilder
+@JsonIgnoreProperties(value = { "hibernateLazyInitializer", "handler" })
 public abstract class Account {
 
     @Id
@@ -56,6 +59,7 @@ public abstract class Account {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
+    @JsonIgnore // avoid serializing lazy proxy; expose via dedicated DTO if needed
     private User user;
 
     @Column(name = "balance", nullable = false)
@@ -86,14 +90,17 @@ public abstract class Account {
     // Composite Pattern - العلاقة مع AccountGroup
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "parent_group_id")
+    @JsonIgnore
     private AccountGroup parentGroup;
 
     @OneToMany(mappedBy = "fromAccount", cascade = CascadeType.ALL)
     @Builder.Default
+    @JsonIgnore
     private List<Transaction> outgoingTransactions = new ArrayList<>();
 
     @OneToMany(mappedBy = "toAccount", cascade = CascadeType.ALL)
     @Builder.Default
+    @JsonIgnore
     private List<Transaction> incomingTransactions = new ArrayList<>();
 
     @Enumerated(EnumType.STRING)

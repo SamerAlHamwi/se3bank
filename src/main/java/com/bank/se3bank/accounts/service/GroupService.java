@@ -3,6 +3,7 @@ package com.bank.se3bank.accounts.service;
 import com.bank.se3bank.accounts.model.Account;
 import com.bank.se3bank.accounts.model.AccountGroup;
 import com.bank.se3bank.accounts.repository.AccountGroupRepository;
+import com.bank.se3bank.accounts.repository.AccountRepository;
 import com.bank.se3bank.shared.dto.CreateGroupRequest;
 import com.bank.se3bank.shared.enums.AccountStatus;
 import com.bank.se3bank.users.model.User;
@@ -20,7 +21,7 @@ import java.util.List;
 public class GroupService {
 
     private final AccountGroupRepository accountGroupRepository;
-    private final AccountService accountService;
+    private final AccountRepository accountRepository;
     private final UserService userService;
     
     /**
@@ -52,6 +53,19 @@ public class GroupService {
         
         return savedGroup;
     }
+
+    /**
+     * Overload لتسهيل إنشاء المجموعة من الحقول المباشرة
+     */
+    @Transactional
+    public AccountGroup createGroup(String groupName, String description, String groupType, User owner) {
+        CreateGroupRequest request = new CreateGroupRequest();
+        request.setGroupName(groupName);
+        request.setDescription(description);
+        request.setGroupType(groupType);
+        request.setOwnerId(owner.getId());
+        return createGroup(request);
+    }
     
     /**
      * إضافة حساب إلى مجموعة
@@ -59,7 +73,8 @@ public class GroupService {
     @Transactional
     public AccountGroup addAccountToGroup(Long groupId, Long accountId) {
         AccountGroup group = getGroupById(groupId);
-        Account account = accountService.getAccountById(accountId);
+        Account account = accountRepository.findById(accountId)
+                .orElseThrow(() -> new IllegalArgumentException("الحساب غير موجود: " + accountId));
         
         // التحقق من أن الحساب لا ينتمي لمجموعة أخرى
         if (account.getParentGroup() != null && !account.getParentGroup().equals(group)) {
@@ -82,7 +97,8 @@ public class GroupService {
     @Transactional
     public AccountGroup removeAccountFromGroup(Long groupId, Long accountId) {
         AccountGroup group = getGroupById(groupId);
-        Account account = accountService.getAccountById(accountId);
+        Account account = accountRepository.findById(accountId)
+                .orElseThrow(() -> new IllegalArgumentException("الحساب غير موجود: " + accountId));
         
         group.remove(account);
         AccountGroup savedGroup = accountGroupRepository.save(group);
