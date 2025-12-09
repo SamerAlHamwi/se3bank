@@ -131,4 +131,14 @@ public abstract class Account {
     @Column(name = "account_type", insertable = false, updatable = false)
     private AccountType accountType;
 
+    public static AccountBuilder<?, ?> builder(AccountType type) {
+    return switch (type) {
+        case SAVINGS -> SavingsAccount.builder();
+        case CHECKING -> CheckingAccount.builder();
+        case LOAN -> LoanAccount.builder();
+        case INVESTMENT -> InvestmentAccount.builder();
+        default -> throw new IllegalArgumentException("Unexpected value: " + type);
+    };
+}
+
 }
