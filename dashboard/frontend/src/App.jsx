@@ -15,6 +15,9 @@ import GroupsList from './components/GroupsList';
 import CreateGroup from './components/CreateGroup';
 import GroupDetails from './components/GroupDetails';
 import GroupTransfer from './components/GroupTransfer';
+import TransactionList from './components/TransactionList';
+import CreateTransaction from './components/CreateTransaction';
+import TransactionDetails from './components/TransactionDetails';
 
 const theme = createTheme({
   direction: 'rtl',
@@ -148,6 +151,9 @@ function App() {
           <Route path="groups/user/:userId" element={<GroupsList />} />
           <Route path="groups/:groupId" element={<GroupDetails />} />
           <Route path="groups/:groupId/transfer" element={<GroupTransfer />} />
+          <Route path="transactions" element={<TransactionList />} />
+          <Route path="transactions/create" element={<CreateTransaction />} />
+          <Route path="transactions/:transactionId" element={<TransactionDetails />} />
         </Route>
       </Routes>
     </ThemeProvider>

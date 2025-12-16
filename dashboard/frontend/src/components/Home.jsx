@@ -27,6 +27,8 @@ import PersonIcon from '@mui/icons-material/Person';
 import LogoutIcon from '@mui/icons-material/Logout';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import GroupsIcon from '@mui/icons-material/Groups';
+import ReceiptLongIcon from '@mui/icons-material/ReceiptLong';
+import AddCircleIcon from '@mui/icons-material/AddCircle';
 import { authApi } from '../services/api';
 
 const drawerWidth = 280;
@@ -99,6 +101,18 @@ const Home = () => {
       icon: <TransferWithinAStationIcon />,
       path: 'transfer',
       roles: ['ROLE_ADMIN', 'ROLE_MANAGER', 'ROLE_TELLER', 'ROLE_CUSTOMER'],
+    },
+    {
+      text: 'سجل المعاملات',
+      icon: <ReceiptLongIcon />,
+      path: 'transactions',
+      roles: ['ROLE_ADMIN', 'ROLE_MANAGER', 'ROLE_TELLER', 'ROLE_CUSTOMER'],
+    },
+    {
+      text: 'إنشاء معاملة',
+      icon: <AddCircleIcon />,
+      path: 'transactions/create',
+      roles: ['ROLE_ADMIN', 'ROLE_MANAGER', 'ROLE_TELLER'],
     },
     {
       text: 'مجموعات الحسابات',
