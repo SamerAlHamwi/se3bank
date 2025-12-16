@@ -7,13 +7,6 @@ import {
   CardContent,
   Typography,
   Grid,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  IconButton,
   Chip,
   Alert,
   CircularProgress,
@@ -22,19 +15,17 @@ import {
   DialogContent,
   DialogActions,
   Tooltip,
+  IconButton,
 } from '@mui/material';
 import {
   Add,
-  Edit,
   Delete,
   Info,
   AccountBalance,
   TrendingUp,
 } from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
-import axios from 'axios';
-
-const API_BASE_URL = 'http://localhost:9090/api';
+import api from '../services/api';
 
 export default function GroupsList() {
   const navigate = useNavigate();
@@ -46,9 +37,6 @@ export default function GroupsList() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedGroupId, setSelectedGroupId] = useState(null);
 
-  const token = localStorage.getItem('token');
-  // Removed currentUser parsing as we get userId from params
-
   useEffect(() => {
     if (userId && userId !== 'undefined') {
       fetchGroups();
@@ -59,14 +47,7 @@ export default function GroupsList() {
     setLoading(true);
     setError('');
     try {
-      const response = await axios.get(
-        `${API_BASE_URL}/groups/user/${userId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const response = await api.get(`/groups/user/${userId}`);
       setGroups(response.data);
     } catch (err) {
       console.error('خطأ في تحميل المجموعات:', err);
@@ -78,11 +59,7 @@ export default function GroupsList() {
 
   const handleDelete = async () => {
     try {
-      await axios.delete(`${API_BASE_URL}/groups/${selectedGroupId}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      await api.delete(`/groups/${selectedGroupId}`);
       setGroups(groups.filter(g => g.id !== selectedGroupId));
       setDeleteDialogOpen(false);
       setSelectedGroupId(null);

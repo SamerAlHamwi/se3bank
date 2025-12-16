@@ -18,6 +18,7 @@ import {
 import { ArrowBack, Add } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
+const token = localStorage.getItem('token');
 
 export default function CreateGroup() {
   const navigate = useNavigate();
@@ -50,10 +51,18 @@ export default function CreateGroup() {
     setLoading(true);
 
     try {
-      await api.post('/groups', {
+      await api.post(
+      '/groups',
+      {
         ...formData,
         ownerId: currentUser.userId,
-      });
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
 
       setSuccess('تم إنشاء المجموعة بنجاح');
       setTimeout(() => {

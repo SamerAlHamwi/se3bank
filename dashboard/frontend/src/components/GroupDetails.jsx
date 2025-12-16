@@ -36,9 +36,7 @@ import {
   Remove,
 } from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
-import axios from 'axios';
-
-const API_BASE_URL = 'http://localhost:9090/api';
+import api from '../services/api';
 
 export default function GroupDetails() {
   const navigate = useNavigate();
@@ -60,7 +58,6 @@ export default function GroupDetails() {
   const [selectedStatus, setSelectedStatus] = useState('ACTIVE');
   const [selectedRemoveAccount, setSelectedRemoveAccount] = useState(null);
 
-  const token = localStorage.getItem('token');
   const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
 
   useEffect(() => {
@@ -73,21 +70,11 @@ export default function GroupDetails() {
     try {
       const [groupRes, accountsRes, balanceRes, statsRes, allAccountsRes] =
         await Promise.all([
-          axios.get(`${API_BASE_URL}/groups/${groupId}`, {
-            headers: { Authorization: `Bearer ${token}` },
-          }),
-          axios.get(`${API_BASE_URL}/groups/${groupId}/accounts`, {
-            headers: { Authorization: `Bearer ${token}` },
-          }),
-          axios.get(`${API_BASE_URL}/groups/${groupId}/balance`, {
-            headers: { Authorization: `Bearer ${token}` },
-          }),
-          axios.get(`${API_BASE_URL}/groups/${groupId}/statistics`, {
-            headers: { Authorization: `Bearer ${token}` },
-          }),
-          axios.get(`${API_BASE_URL}/accounts/user/${currentUser.userId}`, {
-            headers: { Authorization: `Bearer ${token}` },
-          }),
+          api.get(`/groups/${groupId}`),
+          api.get(`/groups/${groupId}/accounts`),
+          api.get(`/groups/${groupId}/balance`),
+          api.get(`/groups/${groupId}/statistics`),
+          api.get(`/accounts/user/${currentUser.userId}`),
         ]);
 
       setGroup(groupRes.data);
@@ -111,11 +98,7 @@ export default function GroupDetails() {
   const handleAddAccount = async () => {
     if (!selectedAccount) return;
     try {
-      await axios.post(
-        `${API_BASE_URL}/groups/${groupId}/accounts/${selectedAccount}`,
-        {},
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      await api.post(`/groups/${groupId}/accounts/${selectedAccount}`);
       setAddAccountDialog(false);
       setSelectedAccount('');
       fetchGroupDetails();
@@ -128,10 +111,7 @@ export default function GroupDetails() {
   const handleRemoveAccount = async () => {
     if (!selectedRemoveAccount) return;
     try {
-      await axios.delete(
-        `${API_BASE_URL}/groups/${groupId}/accounts/${selectedRemoveAccount.id}`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      await api.delete(`/groups/${groupId}/accounts/${selectedRemoveAccount.id}`);
       setRemoveAccountDialog(false);
       setSelectedRemoveAccount(null);
       fetchGroupDetails();
@@ -143,12 +123,11 @@ export default function GroupDetails() {
 
   const handleChangeStatus = async () => {
     try {
-      await axios.patch(
-        `${API_BASE_URL}/groups/${groupId}/status`,
+      await api.patch(
+        `/groups/${groupId}/status`,
         {},
         {
           params: { status: selectedStatus },
-          headers: { Authorization: `Bearer ${token}` },
         }
       );
       setStatusDialog(false);
