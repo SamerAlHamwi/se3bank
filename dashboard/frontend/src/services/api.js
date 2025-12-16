@@ -80,5 +80,13 @@ authApi.interceptors.response.use(
   }
 );
 
+export const decoratorService = {
+  addDecorator: (decoratorData) => api.post('/decorators', decoratorData),
+  getDecoratorsByAccount: (accountId) => api.get(`/decorators/account/${accountId}`),
+  getActiveDecoratorsByAccount: (accountId) => api.get(`/decorators/account/${accountId}/active`),
+  getAccountFeatures: (accountId) => api.get(`/decorators/account/${accountId}/features`),
+  deleteDecorator: (decoratorId) => api.delete(`/decorators/${decoratorId}`),
+};
+
 export default api;
 export { authApi };

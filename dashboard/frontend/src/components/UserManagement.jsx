@@ -52,6 +52,7 @@ const UserManagement = () => {
     try {
       setLoading(true);
       const response = await userService.getAllUsers();
+      console.log('Users data:', response.data); // Log data for debugging
       setUsers(response.data);
     } catch (err) {
       console.error(err);
@@ -170,18 +171,18 @@ const UserManagement = () => {
                 </TableCell>
                 <TableCell>
                   <Chip 
-                    label={user.active ? 'Active' : 'Inactive'} 
-                    color={user.active ? 'success' : 'error'} 
+                    label={user.enabled ? 'Active' : 'Inactive'} 
+                    color={user.enabled ? 'success' : 'error'} 
                     size="small" 
                   />
                 </TableCell>
                 <TableCell>
                   <Tooltip title="Toggle Status">
                     <IconButton 
-                      color={user.active ? 'error' : 'success'}
-                      onClick={() => handleStatusChange(user.id, user.active)}
+                      color={user.enabled ? 'error' : 'success'}
+                      onClick={() => handleStatusChange(user.id, user.enabled)}
                     >
-                      {user.active ? <BlockIcon /> : <CheckCircleIcon />}
+                      {user.enabled ? <BlockIcon /> : <CheckCircleIcon />}
                     </IconButton>
                   </Tooltip>
                   <Tooltip title="Manage Roles">

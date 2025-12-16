@@ -31,7 +31,8 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import CompareArrowsIcon from '@mui/icons-material/CompareArrows';
 import TimelineIcon from '@mui/icons-material/Timeline';
-import api from '../services/api';
+import ExtensionIcon from '@mui/icons-material/Extension';
+import api, { decoratorService } from '../services/api';
 import interestService from '../services/interestService';
 
 const AccountDetails = () => {
@@ -56,6 +57,25 @@ const AccountDetails = () => {
   const [interestReport, setInterestReport] = useState(null);
   const [effectiveRate, setEffectiveRate] = useState(null);
 
+  // Decorator related states
+  const [decoratorDialogOpen, setDecoratorDialogOpen] = useState(false);
+  const [decoratorsList, setDecoratorsList] = useState([]);
+  const [accountFeatures, setAccountFeatures] = useState([]);
+  const [newDecoratorType, setNewDecoratorType] = useState('');
+  const [decoratorDescription, setDecoratorDescription] = useState('');
+
+  const fetchDecoratorData = async () => {
+    try {
+        const listResponse = await decoratorService.getDecoratorsByAccount(accountId);
+        setDecoratorsList(listResponse.data);
+        
+        const featuresResponse = await decoratorService.getAccountFeatures(accountId);
+        setAccountFeatures(featuresResponse.data);
+    } catch (err) {
+        console.error("Failed to load decorator data", err);
+    }
+  };
+
   const fetchAccountData = async () => {
     try {
       setLoading(true);
@@ -78,6 +98,9 @@ const AccountDetails = () => {
       } catch (e) {
         console.log("Effective rate not available");
       }
+
+      // Fetch Decorator Info
+      await fetchDecoratorData();
 
     } catch (err) {
       console.error(err);
@@ -120,7 +143,7 @@ const AccountDetails = () => {
         message: `Strategy changed to ${selectedStrategy}`,
         severity: 'success'
       });
-      fetchAccountData(); // Refresh to update strategy if it's part of account details
+      fetchAccountData(); 
     } catch (err) {
       setSnackbar({
         open: true,
@@ -159,6 +182,42 @@ const AccountDetails = () => {
        console.error(err);
        setSnackbar({ open: true, message: 'Failed to get interest report', severity: 'error' });
      }
+  };
+
+  const handleAddDecorator = async () => {
+      try {
+          await decoratorService.addDecorator({
+              accountId: accountId,
+              decoratorType: newDecoratorType,
+              description: decoratorDescription
+          });
+          setSnackbar({
+              open: true,
+              message: 'Decorator added successfully',
+              severity: 'success'
+          });
+          setNewDecoratorType('');
+          setDecoratorDescription('');
+          fetchDecoratorData();
+      } catch (err) {
+          console.error(err);
+          setSnackbar({ open: true, message: 'Failed to add decorator', severity: 'error' });
+      }
+  };
+
+  const handleDeleteDecorator = async (id) => {
+      try {
+          await decoratorService.deleteDecorator(id);
+          setSnackbar({
+              open: true,
+              message: 'Decorator removed successfully',
+              severity: 'success'
+          });
+          fetchDecoratorData();
+      } catch (err) {
+           console.error(err);
+           setSnackbar({ open: true, message: 'Failed to remove decorator', severity: 'error' });
+      }
   };
 
   const getStatusColor = (status) => {
@@ -244,6 +303,18 @@ const AccountDetails = () => {
                   </Typography>
                 </Grid>
               )}
+               <Grid item xs={12}>
+                  <Typography color="text.secondary" gutterBottom>Active Features (Decorators)</Typography>
+                  <Box display="flex" flexWrap="wrap" gap={1}>
+                      {accountFeatures.length > 0 ? (
+                          accountFeatures.map((feature, idx) => (
+                              <Chip key={idx} label={feature} color="info" size="small" variant="outlined" />
+                          ))
+                      ) : (
+                          <Typography variant="body2" color="text.secondary">No special features enabled.</Typography>
+                      )}
+                  </Box>
+              </Grid>
             </Grid>
           </Paper>
 
@@ -282,8 +353,28 @@ const AccountDetails = () => {
           </Paper>
         </Grid>
 
-        {/* Interest Management Sidebar */}
+        {/* Right Column */}
         <Grid item xs={12} md={4}>
+            
+            {/* Decorator Management */}
+            <Card elevation={3} sx={{ borderRadius: 2, mb: 3 }}>
+                <CardContent>
+                     <Typography variant="h6" gutterBottom display="flex" alignItems="center" gap={1}>
+                        <ExtensionIcon color="action" /> Features & Decorators
+                     </Typography>
+                     <Divider sx={{ mb: 2 }} />
+                     <Button 
+                        variant="contained" 
+                        color="primary" 
+                        fullWidth
+                        onClick={() => setDecoratorDialogOpen(true)}
+                      >
+                        Manage Features
+                      </Button>
+                </CardContent>
+            </Card>
+
+          {/* Interest Management Sidebar */}
           <Card elevation={3} sx={{ borderRadius: 2 }}>
             <CardContent>
               <Typography variant="h6" gutterBottom display="flex" alignItems="center" gap={1}>
@@ -454,6 +545,81 @@ const AccountDetails = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setInterestDialogOpen(false)}>Close</Button>
+        </DialogActions>
+      </Dialog>
+      
+      {/* Decorator Management Dialog */}
+      <Dialog
+        open={decoratorDialogOpen}
+        onClose={() => setDecoratorDialogOpen(false)}
+        fullWidth
+        maxWidth="sm"
+      >
+        <DialogTitle>Manage Account Features</DialogTitle>
+        <DialogContent>
+            <Box sx={{ mt: 2 }}>
+                <Typography variant="subtitle2" gutterBottom>Add New Feature (Decorator)</Typography>
+                <Grid container spacing={2} sx={{ mb: 3 }}>
+                    <Grid item xs={12}>
+                        <TextField 
+                            label="Decorator Type (e.g. OVERDRAFT, VIP)" 
+                            fullWidth 
+                            size="small"
+                            value={newDecoratorType}
+                            onChange={(e) => setNewDecoratorType(e.target.value)}
+                        />
+                    </Grid>
+                     <Grid item xs={12}>
+                        <TextField 
+                            label="Description" 
+                            fullWidth 
+                            size="small"
+                            value={decoratorDescription}
+                            onChange={(e) => setDecoratorDescription(e.target.value)}
+                        />
+                    </Grid>
+                    <Grid item xs={12} textAlign="right">
+                        <Button 
+                            variant="contained" 
+                            disabled={!newDecoratorType}
+                            onClick={handleAddDecorator}
+                        >
+                            Add Decorator
+                        </Button>
+                    </Grid>
+                </Grid>
+                
+                <Divider sx={{ mb: 2 }} />
+                
+                <Typography variant="subtitle2" gutterBottom>Decorators List</Typography>
+                {decoratorsList.length > 0 ? (
+                    <List>
+                        {decoratorsList.map((decorator) => (
+                            <ListItem key={decorator.id} 
+                                secondaryAction={
+                                    <Button 
+                                        size="small" 
+                                        color="error" 
+                                        onClick={() => handleDeleteDecorator(decorator.id)}
+                                    >
+                                        Remove
+                                    </Button>
+                                }
+                            >
+                                <ListItemText 
+                                    primary={decorator.decoratorType}
+                                    secondary={decorator.description || 'No description'}
+                                />
+                            </ListItem>
+                        ))}
+                    </List>
+                ) : (
+                    <Typography variant="body2" color="text.secondary">No decorators found.</Typography>
+                )}
+            </Box>
+        </DialogContent>
+        <DialogActions>
+             <Button onClick={() => setDecoratorDialogOpen(false)}>Close</Button>
         </DialogActions>
       </Dialog>
 
