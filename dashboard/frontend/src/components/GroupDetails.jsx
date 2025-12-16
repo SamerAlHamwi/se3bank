@@ -85,7 +85,7 @@ export default function GroupDetails() {
           axios.get(`${API_BASE_URL}/groups/${groupId}/statistics`, {
             headers: { Authorization: `Bearer ${token}` },
           }),
-          axios.get(`${API_BASE_URL}/accounts/user/${currentUser.id}`, {
+          axios.get(`${API_BASE_URL}/accounts/user/${currentUser.userId}`, {
             headers: { Authorization: `Bearer ${token}` },
           }),
         ]);
@@ -438,7 +438,7 @@ export default function GroupDetails() {
         <Box mt={2} display="flex" gap={2}>
           <Button
             variant="contained"
-            onClick={() => navigate(`/groups/${groupId}/transfer`)}
+            onClick={() => navigate(`/dashboard/groups/${groupId}/transfer`)}
             sx={{
               background: 'linear-gradient(135deg, #7C3AED 0%, #2563EB 100%)',
               textTransform: 'none',

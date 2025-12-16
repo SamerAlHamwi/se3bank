@@ -144,8 +144,8 @@ function App() {
           <Route path="accounts/create" element={<CreateAccount />} />
           <Route path="accounts/:accountId" element={<AccountDetails />} />
           <Route path="transfer" element={<Transfer />} />
-          <Route path="groups/:userId" element={<GroupsList />} />
           <Route path="groups/create" element={<CreateGroup />} />
+          <Route path="groups/user/:userId" element={<GroupsList />} />
           <Route path="groups/:groupId" element={<GroupDetails />} />
           <Route path="groups/:groupId/transfer" element={<GroupTransfer />} />
         </Route>

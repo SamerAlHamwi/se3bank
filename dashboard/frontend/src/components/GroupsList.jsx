@@ -38,6 +38,7 @@ const API_BASE_URL = 'http://localhost:9090/api';
 
 export default function GroupsList() {
   const navigate = useNavigate();
+  const { userId } = useParams();
   
   const [groups, setGroups] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -46,11 +47,12 @@ export default function GroupsList() {
   const [selectedGroupId, setSelectedGroupId] = useState(null);
 
   const token = localStorage.getItem('token');
-  const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
-  const userId = currentUser.id;
+  // Removed currentUser parsing as we get userId from params
 
   useEffect(() => {
-    fetchGroups();
+    if (userId && userId !== 'undefined') {
+      fetchGroups();
+    }
   }, [userId]);
 
   const fetchGroups = async () => {
@@ -136,7 +138,7 @@ export default function GroupsList() {
           <Button
             variant="contained"
             startIcon={<Add />}
-            onClick={() => navigate('/groups/create')}
+            onClick={() => navigate('/dashboard/groups/create')}
             sx={{
               background: 'linear-gradient(135deg, #2563EB 0%, #7C3AED 100%)',
               textTransform: 'none',
@@ -297,7 +299,7 @@ export default function GroupsList() {
                       <Tooltip title="عرض التفاصيل">
                         <IconButton
                           size="small"
-                          onClick={() => navigate(`/groups/${group.id}`)}
+                          onClick={() => navigate(`/dashboard/groups/${group.id}`)}
                           sx={{
                             color: '#2563EB',
                             backgroundColor: '#EFF6FF',
@@ -313,7 +315,7 @@ export default function GroupsList() {
                       <Tooltip title="تحويل">
                         <IconButton
                           size="small"
-                          onClick={() => navigate(`/groups/${group.id}/transfer`)}
+                          onClick={() => navigate(`/dashboard/groups/${group.id}/transfer`)}
                           sx={{
                             color: '#7C3AED',
                             backgroundColor: '#F3E8FF',

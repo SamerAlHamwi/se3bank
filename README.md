@@ -1,5 +1,8 @@
 # SE3 Bank – Backend
 mvn spring-boot:run
+ollama pull llama3.1:8bollama pull llama3.1:8b
+ollama pull qwen2.5-coder:1.5b-base
+ollama pull nomic-embed-text:latest  
 ## Overview
 Spring Boot 3 (Java 17) backend for a banking platform featuring accounts, transactions, notifications, interest strategies, and secure JWT + RBAC authentication.
 

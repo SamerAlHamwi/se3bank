@@ -39,6 +39,7 @@ const Login = () => {
     try {
       const response = await authApi.post('/login', formData);
       localStorage.setItem('token', response.data.token);
+      localStorage.setItem('user', JSON.stringify(response.data));
       navigate('/dashboard');
     } catch (err) {
       setError(err.response?.data?.message || 'فشل في تسجيل الدخول');

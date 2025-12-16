@@ -67,6 +67,7 @@ const Home = () => {
 
   const handleLogout = () => {
     localStorage.removeItem('token');
+    localStorage.removeItem('user');
     navigate('/login');
   };
 
@@ -102,7 +103,7 @@ const Home = () => {
     {
       text: 'مجموعات الحسابات',
       icon: <GroupsIcon />,
-      path: `groups/${user?.id}`,
+      path: `groups/user/${user?.userId}`,
       roles: ['ROLE_ADMIN', 'ROLE_MANAGER', 'ROLE_TELLER', 'ROLE_CUSTOMER'],
     },
   ];

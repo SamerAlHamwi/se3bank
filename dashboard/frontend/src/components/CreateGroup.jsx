@@ -17,9 +17,7 @@ import {
 } from '@mui/material';
 import { ArrowBack, Add } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
-
-const API_BASE_URL = 'http://localhost:9090/api';
+import api from '../services/api';
 
 export default function CreateGroup() {
   const navigate = useNavigate();
@@ -35,7 +33,6 @@ export default function CreateGroup() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
-  const token = localStorage.getItem('token');
   const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
 
   const handleChange = (e) => {
@@ -53,22 +50,14 @@ export default function CreateGroup() {
     setLoading(true);
 
     try {
-      const response = await axios.post(
-        `${API_BASE_URL}/groups`,
-        {
-          ...formData,
-          ownerId: currentUser.id,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      await api.post('/groups', {
+        ...formData,
+        ownerId: currentUser.userId,
+      });
 
       setSuccess('تم إنشاء المجموعة بنجاح');
       setTimeout(() => {
-        navigate(`/groups/${currentUser.id}`);
+        navigate(`/dashboard/groups/user/${currentUser.userId}`);
       }, 1500);
     } catch (err) {
       console.error('خطأ في إنشاء المجموعة:', err);
