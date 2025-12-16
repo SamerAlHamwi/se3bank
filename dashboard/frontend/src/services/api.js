@@ -46,10 +46,19 @@ authApi.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      window.location.href = '/login';
+    // Check if error response exists
+    if (error.response) {
+      // If status is 401 Unauthorized
+      if (error.response.status === 401) {
+        // Only redirect to login if we are not already on the login or register page
+        // to avoid loops or interrupting the user if they are trying to log in
+        const path = window.location.pathname;
+        if (path !== '/login' && path !== '/register') {
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+          window.location.href = '/login';
+        }
+      }
     }
     return Promise.reject(error);
   }
@@ -60,9 +69,12 @@ authApi.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      window.location.href = '/login';
+       const path = window.location.pathname;
+        if (path !== '/login' && path !== '/register') {
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+          window.location.href = '/login';
+        }
     }
     return Promise.reject(error);
   }

@@ -5,110 +5,160 @@ import {
   Paper,
   Typography,
   Box,
+  Button,
   Grid,
+  Divider,
+  Chip,
   Card,
   CardContent,
-  Button,
-  Chip,
-  Alert,
   CircularProgress,
+  Alert,
   Dialog,
-  DialogActions,
-  DialogContent,
-  DialogContentText,
   DialogTitle,
+  DialogContent,
+  DialogActions,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
   TextField,
-  IconButton,
-  Tooltip,
+  Snackbar,
+  List,
+  ListItem,
+  ListItemText
 } from '@mui/material';
-import EditIcon from '@mui/icons-material/Edit';
-import DeleteIcon from '@mui/icons-material/Delete';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
-import api, { authApi } from '../services/api';
+import TrendingUpIcon from '@mui/icons-material/TrendingUp';
+import CompareArrowsIcon from '@mui/icons-material/CompareArrows';
+import TimelineIcon from '@mui/icons-material/Timeline';
+import api from '../services/api';
+import interestService from '../services/interestService';
 
 const AccountDetails = () => {
   const { accountId } = useParams();
   const navigate = useNavigate();
+  
   const [account, setAccount] = useState(null);
-  const [balance, setBalance] = useState(null);
-  const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [editForm, setEditForm] = useState({
-    balance: 0,
-    interestRate: 0,
-    overdraftLimit: 0,
-    minimumBalance: 0,
-  });
+  const [transactions, setTransactions] = useState([]);
+  
+  // Interest related states
+  const [interestDialogOpen, setInterestDialogOpen] = useState(false);
+  const [selectedStrategy, setSelectedStrategy] = useState('');
+  const [availableStrategies, setAvailableStrategies] = useState({});
+  const [futureInterest, setFutureInterest] = useState(null);
+  const [futureMonths, setFutureMonths] = useState(12);
+  const [comparisonResult, setComparisonResult] = useState(null);
+  const [compareStrategy1, setCompareStrategy1] = useState('');
+  const [compareStrategy2, setCompareStrategy2] = useState('');
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+  const [interestReport, setInterestReport] = useState(null);
+  const [effectiveRate, setEffectiveRate] = useState(null);
 
-  useEffect(() => {
-    fetchAccountDetails();
-    fetchCurrentUser();
-  }, [accountId]);
-
-  const fetchAccountDetails = async () => {
+  const fetchAccountData = async () => {
     try {
-      const [accountResponse, balanceResponse] = await Promise.all([
-        api.get(`/accounts/${accountId}`),
-        api.get(`/accounts/${accountId}/balance`)
-      ]);
-      setAccount(accountResponse.data);
-      setBalance(balanceResponse.data);
-      setEditForm({
-        balance: accountResponse.data.balance || 0,
-        interestRate: accountResponse.data.interestRate || 0,
-        overdraftLimit: accountResponse.data.overdraftLimit || 0,
-        minimumBalance: accountResponse.data.minimumBalance || 0,
-      });
+      setLoading(true);
+      const accResponse = await api.get(`/accounts/${accountId}`);
+      setAccount(accResponse.data);
+      
+      const transResponse = await api.get(`/transactions/account/${accountId}`);
+      setTransactions(transResponse.data);
+
+      // Fetch supported strategies based on account type
+      if (accResponse.data.accountType) {
+        const stratResponse = await interestService.getSupportedStrategies(accResponse.data.accountType);
+        setAvailableStrategies(stratResponse.data);
+      }
+      
+      // Fetch Effective Rate
+      try {
+        const rateResponse = await interestService.getEffectiveInterestRate(accountId);
+        setEffectiveRate(rateResponse.data);
+      } catch (e) {
+        console.log("Effective rate not available");
+      }
+
     } catch (err) {
-      setError('فشل في تحميل تفاصيل الحساب');
+      console.error(err);
+      setError('Failed to load account details');
     } finally {
       setLoading(false);
     }
   };
 
-  const fetchCurrentUser = async () => {
+  useEffect(() => {
+    if (accountId) {
+      fetchAccountData();
+    }
+  }, [accountId]);
+
+  const handleApplyInterest = async () => {
     try {
-      const response = await authApi.get('/me');
-      setUser(response.data);
+      const response = await interestService.applyInterest(accountId);
+      setSnackbar({
+        open: true,
+        message: `Interest applied: $${response.data}`,
+        severity: 'success'
+      });
+      fetchAccountData();
     } catch (err) {
-      setError('فشل في تحميل بيانات المستخدم');
+      setSnackbar({
+        open: true,
+        message: 'Failed to apply interest',
+        severity: 'error'
+      });
     }
   };
 
-  const handleEdit = () => {
-    setEditDialogOpen(true);
-  };
-
-  const handleEditSubmit = async () => {
+  const handleChangeStrategy = async () => {
+    if (!selectedStrategy) return;
     try {
-      await api.put(`/accounts/${accountId}`, editForm);
-      setEditDialogOpen(false);
-      fetchAccountDetails();
+      await interestService.changeStrategy(accountId, selectedStrategy);
+      setSnackbar({
+        open: true,
+        message: `Strategy changed to ${selectedStrategy}`,
+        severity: 'success'
+      });
+      fetchAccountData(); // Refresh to update strategy if it's part of account details
     } catch (err) {
-      setError('فشل في تحديث الحساب');
+      setSnackbar({
+        open: true,
+        message: 'Failed to change strategy',
+        severity: 'error'
+      });
     }
   };
 
-  const handleDelete = async () => {
-    if (window.confirm('هل أنت متأكد من إغلاق هذا الحساب؟')) {
-      try {
-        await api.delete(`/accounts/${accountId}`);
-        navigate('..');
-      } catch (err) {
-        setError('فشل في إغلاق الحساب');
-      }
+  const handleCalculateFuture = async () => {
+    try {
+      const response = await interestService.calculateFutureInterest(accountId, futureMonths);
+      setFutureInterest(response.data);
+    } catch (err) {
+      console.error(err);
+      setSnackbar({ open: true, message: 'Failed to calculate future interest', severity: 'error' });
     }
   };
 
-  const handleEditFormChange = (e) => {
-    const { name, value } = e.target;
-    setEditForm(prev => ({
-      ...prev,
-      [name]: parseFloat(value) || 0
-    }));
+  const handleCompareStrategies = async () => {
+    if (!compareStrategy1 || !compareStrategy2) return;
+    try {
+      const response = await interestService.compareStrategies(accountId, compareStrategy1, compareStrategy2);
+      setComparisonResult(response.data);
+    } catch (err) {
+      console.error(err);
+      setSnackbar({ open: true, message: 'Failed to compare strategies', severity: 'error' });
+    }
+  };
+  
+  const handleGetReport = async () => {
+     try {
+       const response = await interestService.getInterestReport(accountId);
+       setInterestReport(response.data);
+     } catch (err) {
+       console.error(err);
+       setSnackbar({ open: true, message: 'Failed to get interest report', severity: 'error' });
+     }
   };
 
   const getStatusColor = (status) => {
@@ -120,490 +170,303 @@ const AccountDetails = () => {
     }
   };
 
-  const getStatusText = (status) => {
-    switch (status) {
-      case 'ACTIVE': return 'نشط';
-      case 'FROZEN': return 'مجمد';
-      case 'CLOSED': return 'مغلق';
-      default: return status;
-    }
-  };
-
-  const getAccountTypeText = (type) => {
-    switch (type) {
-      case 'SAVINGS': return 'توفير';
-      case 'CHECKING': return 'جاري';
-      case 'LOAN': return 'قرض';
-      case 'INVESTMENT': return 'استثمار';
-      case 'BUSINESS': return 'تجاري';
-      default: return type;
-    }
-  };
-
-  const canEdit = user?.roles?.some(role =>
-    ['ROLE_ADMIN', 'ROLE_MANAGER'].includes(role)
-  );
-
   if (loading) {
     return (
-      <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
-        <CircularProgress size={50} sx={{ color: '#2563EB' }} />
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="50vh">
+        <CircularProgress />
       </Box>
     );
   }
 
-  if (!account) {
+  if (error) {
     return (
-      <Container maxWidth="md">
-        <Alert 
-          severity="error"
-          sx={{
-            borderRadius: 2,
-            boxShadow: '0 4px 12px rgba(239, 68, 68, 0.2)',
-            mt: 4,
-          }}
-        >
-          الحساب غير موجود
-        </Alert>
+      <Container maxWidth="lg" sx={{ mt: 4 }}>
+        <Alert severity="error">{error}</Alert>
+        <Button startIcon={<ArrowBackIcon />} onClick={() => navigate(-1)} sx={{ mt: 2 }}>
+          Back
+        </Button>
       </Container>
     );
   }
 
   return (
-    <Container maxWidth="md">
-      <Box sx={{ mb: 4 }}>
-        <Box display="flex" alignItems="center" mb={3}>
-          <IconButton 
-            onClick={() => navigate('..')} 
-            sx={{ 
-              mr: 2,
-              transition: 'all 0.3s ease',
-              '&:hover': {
-                backgroundColor: '#EFF6FF',
-                color: '#2563EB',
-              },
-            }}
-          >
-            <ArrowBackIcon />
-          </IconButton>
-          <Typography 
-            variant="h4" 
-            component="h1"
-            sx={{
-              fontWeight: 700,
-              background: 'linear-gradient(135deg, #2563EB 0%, #7C3AED 100%)',
-              backgroundClip: 'text',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-            }}
-          >
-            تفاصيل الحساب
-          </Typography>
-        </Box>
+    <Container maxWidth="lg" sx={{ mb: 4 }}>
+      <Button 
+        startIcon={<ArrowBackIcon />} 
+        onClick={() => navigate('/dashboard/accounts')} 
+        sx={{ mb: 3 }}
+      >
+        Back to Accounts
+      </Button>
 
-        {error && (
-          <Alert 
-            severity="error" 
-            sx={{ 
-              mb: 3,
-              borderRadius: 2,
-              boxShadow: '0 4px 12px rgba(239, 68, 68, 0.2)',
-            }}
-          >
-            {error}
-          </Alert>
-        )}
-
-        <Grid container spacing={3}>
-          <Grid item xs={12} md={8}>
-            <Card
-              sx={{
-                borderRadius: 3,
-                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)',
-                border: '1px solid rgba(0, 0, 0, 0.05)',
-              }}
-            >
-              <CardContent sx={{ p: 3 }}>
-                <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-                  <Typography 
-                    variant="h6" 
-                    component="h2"
-                    sx={{ fontWeight: 700, color: '#333' }}
-                  >
-                    معلومات الحساب
-                  </Typography>
-                  <Box>
-                    {canEdit && account.status !== 'CLOSED' && (
-                      <>
-                        <Tooltip title="تعديل">
-                          <IconButton 
-                            onClick={handleEdit} 
-                            sx={{
-                              color: '#7C3AED',
-                              transition: 'all 0.3s ease',
-                              '&:hover': {
-                                backgroundColor: '#F3E8FF',
-                              },
-                            }}
-                          >
-                            <EditIcon />
-                          </IconButton>
-                        </Tooltip>
-                        <Tooltip title="إغلاق">
-                          <IconButton 
-                            onClick={handleDelete} 
-                            sx={{
-                              color: '#EF4444',
-                              transition: 'all 0.3s ease',
-                              '&:hover': {
-                                backgroundColor: '#FEE2E2',
-                              },
-                            }}
-                          >
-                            <DeleteIcon />
-                          </IconButton>
-                        </Tooltip>
-                      </>
-                    )}
-                  </Box>
-                </Box>
-
-                <Grid container spacing={2.5}>
-                  <Grid item xs={12} sm={6}>
-                    <Box
-                      sx={{
-                        p: 2,
-                        backgroundColor: '#F8FAFC',
-                        borderRadius: 2,
-                        borderLeft: '3px solid #2563EB',
-                      }}
-                    >
-                      <Typography variant="caption" sx={{ color: '#999', fontWeight: 600, fontSize: '0.85rem' }}>
-                        رقم الحساب
-                      </Typography>
-                      <Typography variant="body1" sx={{ fontWeight: 700, color: '#2563EB', mt: 0.5 }}>
-                        {account.accountNumber}
-                      </Typography>
-                    </Box>
-                  </Grid>
-
-                  <Grid item xs={12} sm={6}>
-                    <Box
-                      sx={{
-                        p: 2,
-                        backgroundColor: '#F8FAFC',
-                        borderRadius: 2,
-                        borderLeft: '3px solid #7C3AED',
-                      }}
-                    >
-                      <Typography variant="caption" sx={{ color: '#999', fontWeight: 600, fontSize: '0.85rem' }}>
-                        نوع الحساب
-                      </Typography>
-                      <Typography variant="body1" sx={{ fontWeight: 600, color: '#555', mt: 0.5 }}>
-                        {getAccountTypeText(account.accountType)}
-                      </Typography>
-                    </Box>
-                  </Grid>
-
-                  <Grid item xs={12} sm={6}>
-                    <Box
-                      sx={{
-                        p: 2,
-                        backgroundColor: '#F8FAFC',
-                        borderRadius: 2,
-                        borderLeft: '3px solid #10B981',
-                      }}
-                    >
-                      <Typography variant="caption" sx={{ color: '#999', fontWeight: 600, fontSize: '0.85rem' }}>
-                        الحالة
-                      </Typography>
-                      <Box sx={{ mt: 0.5 }}>
-                        <Chip
-                          label={getStatusText(account.status)}
-                          color={getStatusColor(account.status)}
-                          size="small"
-                          sx={{ fontWeight: 700, fontSize: '0.8rem' }}
-                        />
-                      </Box>
-                    </Box>
-                  </Grid>
-
-                  <Grid item xs={12} sm={6}>
-                    <Box
-                      sx={{
-                        p: 2,
-                        backgroundColor: '#F8FAFC',
-                        borderRadius: 2,
-                        borderLeft: '3px solid #F59E0B',
-                      }}
-                    >
-                      <Typography variant="caption" sx={{ color: '#999', fontWeight: 600, fontSize: '0.85rem' }}>
-                        تاريخ الإنشاء
-                      </Typography>
-                      <Typography variant="body1" sx={{ fontWeight: 600, color: '#555', mt: 0.5 }}>
-                        {new Date(account.createdAt).toLocaleDateString('ar')}
-                      </Typography>
-                    </Box>
-                  </Grid>
-
-                  <Grid item xs={12} sm={6}>
-                    <Box
-                      sx={{
-                        p: 2,
-                        backgroundColor: '#F8FAFC',
-                        borderRadius: 2,
-                        borderLeft: '3px solid #06B6D4',
-                      }}
-                    >
-                      <Typography variant="caption" sx={{ color: '#999', fontWeight: 600, fontSize: '0.85rem' }}>
-                        معدل الفائدة
-                      </Typography>
-                      <Typography variant="body1" sx={{ fontWeight: 700, color: '#06B6D4', mt: 0.5 }}>
-                        {account.interestRate}%
-                      </Typography>
-                    </Box>
-                  </Grid>
-
-                  <Grid item xs={12} sm={6}>
-                    <Box
-                      sx={{
-                        p: 2,
-                        backgroundColor: '#F8FAFC',
-                        borderRadius: 2,
-                        borderLeft: '3px solid #EC4899',
-                      }}
-                    >
-                      <Typography variant="caption" sx={{ color: '#999', fontWeight: 600, fontSize: '0.85rem' }}>
-                        حد السحب على المكشوف
-                      </Typography>
-                      <Typography variant="body1" sx={{ fontWeight: 600, color: '#555', mt: 0.5 }}>
-                        ${account.overdraftLimit?.toFixed(2)}
-                      </Typography>
-                    </Box>
-                  </Grid>
-
-                  <Grid item xs={12} sm={6}>
-                    <Box
-                      sx={{
-                        p: 2,
-                        backgroundColor: '#F8FAFC',
-                        borderRadius: 2,
-                        borderLeft: '3px solid #8B5CF6',
-                      }}
-                    >
-                      <Typography variant="caption" sx={{ color: '#999', fontWeight: 600, fontSize: '0.85rem' }}>
-                        الحد الأدنى للرصيد
-                      </Typography>
-                      <Typography variant="body1" sx={{ fontWeight: 600, color: '#555', mt: 0.5 }}>
-                        ${account.minimumBalance?.toFixed(2)}
-                      </Typography>
-                    </Box>
-                  </Grid>
-                </Grid>
-              </CardContent>
-            </Card>
-          </Grid>
-
-          <Grid item xs={12} md={4}>
-            <Card
-              sx={{
-                borderRadius: 3,
-                background: 'linear-gradient(135deg, #2563EB 0%, #7C3AED 100%)',
-                color: 'white',
-                boxShadow: '0 8px 24px rgba(37, 99, 235, 0.3)',
-                border: 'none',
-              }}
-            >
-              <CardContent sx={{ textAlign: 'center' }}>
-                <AccountBalanceIcon sx={{ fontSize: 50, mb: 2, opacity: 0.3 }} />
-                <Typography 
-                  variant="body2" 
-                  sx={{ 
-                    fontWeight: 500, 
-                    opacity: 0.9,
-                    mb: 1,
-                  }}
-                >
-                  الرصيد الحالي
+      <Grid container spacing={3}>
+        {/* Main Account Info */}
+        <Grid item xs={12} md={8}>
+          <Paper sx={{ p: 3, borderRadius: 2 }}>
+            <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+              <Typography variant="h5" fontWeight="bold" color="primary">
+                Account Details
+              </Typography>
+              <Chip 
+                label={account.status} 
+                color={getStatusColor(account.status)} 
+                sx={{ fontWeight: 'bold' }}
+              />
+            </Box>
+            <Divider sx={{ mb: 2 }} />
+            
+            <Grid container spacing={2}>
+              <Grid item xs={12} sm={6}>
+                <Typography color="text.secondary">Account Number</Typography>
+                <Typography variant="h6">{account.accountNumber}</Typography>
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <Typography color="text.secondary">Account Type</Typography>
+                <Typography variant="h6">{account.accountType}</Typography>
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <Typography color="text.secondary">Current Balance</Typography>
+                <Typography variant="h4" color="success.main" fontWeight="bold">
+                  ${account.balance?.toFixed(2)}
                 </Typography>
-                {balance && (
-                  <>
-                    <Typography 
-                      variant="h3" 
-                      sx={{ 
-                        fontWeight: 700, 
-                        mb: 2,
-                        fontSize: '2.5rem',
-                      }}
-                    >
-                      ${balance.balance?.toFixed(2)}
-                    </Typography>
-                    <Box sx={{ 
-                      p: 1.5, 
-                      backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                      borderRadius: 1.5,
-                      mb: 1.5,
-                    }}>
-                      <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                        الرصيد المتاح: ${balance.availableBalance?.toFixed(2)}
-                      </Typography>
-                    </Box>
-                    <Typography variant="caption" sx={{ opacity: 0.8 }}>
-                      العملة: {balance.currency}
-                    </Typography>
-                  </>
-                )}
-              </CardContent>
-            </Card>
-          </Grid>
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <Typography color="text.secondary">Available Balance</Typography>
+                <Typography variant="h6">
+                  ${account.availableBalance?.toFixed(2)}
+                </Typography>
+              </Grid>
+              {effectiveRate !== null && (
+                 <Grid item xs={12} sm={6}>
+                  <Typography color="text.secondary">Effective Interest Rate</Typography>
+                  <Typography variant="h6" color="secondary.main">
+                    {effectiveRate}%
+                  </Typography>
+                </Grid>
+              )}
+            </Grid>
+          </Paper>
+
+          {/* Transactions History */}
+          <Paper sx={{ p: 3, mt: 3, borderRadius: 2 }}>
+            <Typography variant="h6" gutterBottom fontWeight="bold">
+              Recent Transactions
+            </Typography>
+            <Divider sx={{ mb: 2 }} />
+            {transactions.length > 0 ? (
+               <List>
+                 {transactions.slice(0, 5).map((t, i) => (
+                   <React.Fragment key={t.id}>
+                     {i > 0 && <Divider component="li" />}
+                     <ListItem>
+                       <ListItemText 
+                         primary={t.type} 
+                         secondary={new Date(t.timestamp).toLocaleDateString()}
+                       />
+                       <Typography 
+                          fontWeight="bold" 
+                          color={t.type === 'DEPOSIT' || (t.type === 'TRANSFER' && t.toAccountId === account.id) ? 'success.main' : 'error.main'}
+                       >
+                         {t.amount > 0 ? '+' : ''}{t.amount}
+                       </Typography>
+                     </ListItem>
+                   </React.Fragment>
+                 ))}
+               </List>
+            ) : (
+              <Typography color="text.secondary">No transactions found.</Typography>
+            )}
+            <Box mt={2} textAlign="right">
+               <Button onClick={() => navigate('/dashboard/transactions')}>View All</Button>
+            </Box>
+          </Paper>
         </Grid>
 
-        {/* Edit Dialog */}
-        <Dialog 
-          open={editDialogOpen} 
-          onClose={() => setEditDialogOpen(false)}
-          PaperProps={{
-            sx: {
-              borderRadius: 3,
-              boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)',
-            },
-          }}
-        >
-          <DialogTitle sx={{ fontWeight: 700, color: '#333', pb: 1 }}>
-            تعديل الحساب
-          </DialogTitle>
-          <DialogContent sx={{ pt: 2 }}>
-            <DialogContentText sx={{ color: '#555', fontWeight: 500, mb: 2 }}>
-              قم بتعديل بيانات الحساب حسب الحاجة.
-            </DialogContentText>
-            <TextField
-              autoFocus
-              margin="normal"
-              name="balance"
-              label="الرصيد"
-              type="number"
-              fullWidth
-              value={editForm.balance}
-              onChange={handleEditFormChange}
-              inputProps={{ step: 0.01 }}
-              variant="outlined"
-              sx={{
-                '& .MuiOutlinedInput-root': {
-                  borderRadius: 2,
-                  backgroundColor: '#F8FAFC',
-                  '&:hover fieldset': {
-                    borderColor: '#2563EB',
-                  },
-                  '&.Mui-focused fieldset': {
-                    borderColor: '#2563EB',
-                    boxShadow: '0 0 0 3px rgba(37, 99, 235, 0.1)',
-                  },
-                },
-              }}
-            />
-            <TextField
-              margin="normal"
-              name="interestRate"
-              label="معدل الفائدة (%)"
-              type="number"
-              fullWidth
-              value={editForm.interestRate}
-              onChange={handleEditFormChange}
-              inputProps={{ step: 0.01 }}
-              variant="outlined"
-              sx={{
-                '& .MuiOutlinedInput-root': {
-                  borderRadius: 2,
-                  backgroundColor: '#F8FAFC',
-                  '&:hover fieldset': {
-                    borderColor: '#2563EB',
-                  },
-                  '&.Mui-focused fieldset': {
-                    borderColor: '#2563EB',
-                    boxShadow: '0 0 0 3px rgba(37, 99, 235, 0.1)',
-                  },
-                },
-              }}
-            />
-            <TextField
-              margin="normal"
-              name="overdraftLimit"
-              label="حد السحب على المكشوف"
-              type="number"
-              fullWidth
-              value={editForm.overdraftLimit}
-              onChange={handleEditFormChange}
-              inputProps={{ step: 0.01 }}
-              variant="outlined"
-              sx={{
-                '& .MuiOutlinedInput-root': {
-                  borderRadius: 2,
-                  backgroundColor: '#F8FAFC',
-                  '&:hover fieldset': {
-                    borderColor: '#2563EB',
-                  },
-                  '&.Mui-focused fieldset': {
-                    borderColor: '#2563EB',
-                    boxShadow: '0 0 0 3px rgba(37, 99, 235, 0.1)',
-                  },
-                },
-              }}
-            />
-            <TextField
-              margin="normal"
-              name="minimumBalance"
-              label="الحد الأدنى للرصيد"
-              type="number"
-              fullWidth
-              value={editForm.minimumBalance}
-              onChange={handleEditFormChange}
-              inputProps={{ step: 0.01 }}
-              variant="outlined"
-              sx={{
-                '& .MuiOutlinedInput-root': {
-                  borderRadius: 2,
-                  backgroundColor: '#F8FAFC',
-                  '&:hover fieldset': {
-                    borderColor: '#2563EB',
-                  },
-                  '&.Mui-focused fieldset': {
-                    borderColor: '#2563EB',
-                    boxShadow: '0 0 0 3px rgba(37, 99, 235, 0.1)',
-                  },
-                },
-              }}
-            />
-          </DialogContent>
-          <DialogActions sx={{ p: 2, gap: 1 }}>
-            <Button 
-              onClick={() => setEditDialogOpen(false)}
-              sx={{
-                py: 1,
-                px: 2.5,
-                borderRadius: 1.5,
-                textTransform: 'none',
-                fontWeight: 600,
-              }}
-            >
-              إلغاء
-            </Button>
-            <Button 
-              onClick={handleEditSubmit}
-              variant="contained"
-              sx={{
-                py: 1,
-                px: 2.5,
-                borderRadius: 1.5,
-                background: 'linear-gradient(135deg, #2563EB 0%, #7C3AED 100%)',
-                textTransform: 'none',
-                fontWeight: 700,
-              }}
-            >
-              حفظ
-            </Button>
-          </DialogActions>
-        </Dialog>
-      </Box>
+        {/* Interest Management Sidebar */}
+        <Grid item xs={12} md={4}>
+          <Card elevation={3} sx={{ borderRadius: 2 }}>
+            <CardContent>
+              <Typography variant="h6" gutterBottom display="flex" alignItems="center" gap={1}>
+                <TrendingUpIcon color="secondary" /> Interest Management
+              </Typography>
+              <Divider sx={{ mb: 2 }} />
+              
+              <Button 
+                variant="contained" 
+                color="secondary" 
+                fullWidth 
+                sx={{ mb: 2 }}
+                onClick={() => setInterestDialogOpen(true)}
+              >
+                Manage Interest Options
+              </Button>
+
+              <Button 
+                variant="outlined" 
+                fullWidth 
+                sx={{ mb: 2 }}
+                onClick={handleApplyInterest}
+              >
+                Apply Current Interest Now
+              </Button>
+              
+               <Button 
+                variant="outlined" 
+                color="info"
+                fullWidth 
+                onClick={handleGetReport}
+              >
+                Get Detailed Interest Report
+              </Button>
+              
+              {interestReport && (
+                <Box mt={2} p={2} bgcolor="background.default" borderRadius={1}>
+                    <Typography variant="subtitle2" gutterBottom>Interest Report:</Typography>
+                    <Typography variant="body2">Accrued Interest: ${interestReport.accruedInterest}</Typography>
+                    <Typography variant="body2">Last Applied: {interestReport.lastAppliedDate || 'Never'}</Typography>
+                </Box>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Future Calculator */}
+          <Card elevation={3} sx={{ mt: 3, borderRadius: 2 }}>
+            <CardContent>
+              <Typography variant="h6" gutterBottom display="flex" alignItems="center" gap={1}>
+                <TimelineIcon color="primary" /> Future Calculator
+              </Typography>
+              <Box display="flex" gap={1} mb={2}>
+                 <TextField 
+                    label="Months" 
+                    type="number" 
+                    size="small" 
+                    value={futureMonths} 
+                    onChange={(e) => setFutureMonths(e.target.value)}
+                    fullWidth
+                 />
+                 <Button variant="contained" onClick={handleCalculateFuture}>Calc</Button>
+              </Box>
+              {futureInterest !== null && (
+                 <Alert severity="info">
+                    Estimated Interest in {futureMonths} months: <strong>${futureInterest.toFixed(2)}</strong>
+                 </Alert>
+              )}
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
+
+      {/* Interest Management Dialog */}
+      <Dialog 
+        open={interestDialogOpen} 
+        onClose={() => setInterestDialogOpen(false)}
+        fullWidth
+        maxWidth="sm"
+      >
+        <DialogTitle>Interest Configuration</DialogTitle>
+        <DialogContent>
+          <Box sx={{ mt: 2 }}>
+             <Typography variant="subtitle1" gutterBottom fontWeight="bold">Change Strategy</Typography>
+             <Box display="flex" gap={2} mb={3}>
+                <FormControl fullWidth size="small">
+                  <InputLabel>New Strategy</InputLabel>
+                  <Select
+                    value={selectedStrategy}
+                    label="New Strategy"
+                    onChange={(e) => setSelectedStrategy(e.target.value)}
+                  >
+                    {Object.keys(availableStrategies).map(key => (
+                      <MenuItem key={key} value={key}>{key}</MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+                <Button variant="contained" onClick={handleChangeStrategy} disabled={!selectedStrategy}>Save</Button>
+             </Box>
+             
+             <Divider sx={{ my: 3 }} />
+             
+             <Typography variant="subtitle1" gutterBottom fontWeight="bold" display="flex" alignItems="center" gap={1}>
+                <CompareArrowsIcon fontSize="small" /> Compare Strategies
+             </Typography>
+             <Grid container spacing={2} alignItems="center">
+                <Grid item xs={5}>
+                   <FormControl fullWidth size="small">
+                      <InputLabel>Strategy 1</InputLabel>
+                      <Select
+                        value={compareStrategy1}
+                        label="Strategy 1"
+                        onChange={(e) => setCompareStrategy1(e.target.value)}
+                      >
+                         {Object.keys(availableStrategies).map(key => (
+                          <MenuItem key={key} value={key}>{key}</MenuItem>
+                        ))}
+                      </Select>
+                   </FormControl>
+                </Grid>
+                <Grid item xs={5}>
+                   <FormControl fullWidth size="small">
+                      <InputLabel>Strategy 2</InputLabel>
+                      <Select
+                        value={compareStrategy2}
+                        label="Strategy 2"
+                        onChange={(e) => setCompareStrategy2(e.target.value)}
+                      >
+                        {Object.keys(availableStrategies).map(key => (
+                          <MenuItem key={key} value={key}>{key}</MenuItem>
+                        ))}
+                      </Select>
+                   </FormControl>
+                </Grid>
+                <Grid item xs={2}>
+                   <Button variant="outlined" onClick={handleCompareStrategies} fullWidth>Go</Button>
+                </Grid>
+             </Grid>
+             
+             {comparisonResult && (
+                <Box mt={2} p={2} bgcolor="#f5f5f5" borderRadius={2}>
+                   <Typography variant="subtitle2" gutterBottom>Comparison Result:</Typography>
+                   <Grid container spacing={1}>
+                      <Grid item xs={6}>
+                         <Typography variant="caption" display="block" color="text.secondary">
+                           {comparisonResult.strategy1Name}
+                         </Typography>
+                         <Typography variant="body1" fontWeight="bold">
+                           ${comparisonResult.strategy1Value?.toFixed(2)}
+                         </Typography>
+                      </Grid>
+                      <Grid item xs={6}>
+                         <Typography variant="caption" display="block" color="text.secondary">
+                           {comparisonResult.strategy2Name}
+                         </Typography>
+                         <Typography variant="body1" fontWeight="bold">
+                           ${comparisonResult.strategy2Value?.toFixed(2)}
+                         </Typography>
+                      </Grid>
+                      <Grid item xs={12}>
+                         <Typography variant="body2" color="primary" sx={{ mt: 1 }}>
+                            Difference: ${comparisonResult.difference?.toFixed(2)}
+                         </Typography>
+                      </Grid>
+                   </Grid>
+                </Box>
+             )}
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setInterestDialogOpen(false)}>Close</Button>
+        </DialogActions>
+      </Dialog>
+
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={6000}
+        onClose={() => setSnackbar({ ...snackbar, open: false })}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert onClose={() => setSnackbar({ ...snackbar, open: false })} severity={snackbar.severity} sx={{ width: '100%' }}>
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Container>
   );
 };

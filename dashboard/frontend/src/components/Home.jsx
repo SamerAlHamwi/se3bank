@@ -17,6 +17,7 @@ import {
   Menu,
   MenuItem,
   CircularProgress,
+  Badge,
 } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
@@ -29,7 +30,11 @@ import DashboardIcon from '@mui/icons-material/Dashboard';
 import GroupsIcon from '@mui/icons-material/Groups';
 import ReceiptLongIcon from '@mui/icons-material/ReceiptLong';
 import AddCircleIcon from '@mui/icons-material/AddCircle';
+import PercentIcon from '@mui/icons-material/Percent';
+import NotificationsIcon from '@mui/icons-material/Notifications';
+import PeopleIcon from '@mui/icons-material/People';
 import { authApi } from '../services/api';
+import notificationService from '../services/notificationService';
 
 const drawerWidth = 280;
 
@@ -37,6 +42,7 @@ const Home = () => {
   const [open, setOpen] = useState(true);
   const [user, setUser] = useState(null);
   const [anchorEl, setAnchorEl] = useState(null);
+  const [unreadCount, setUnreadCount] = useState(0);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -50,6 +56,25 @@ const Home = () => {
     };
     fetchUser();
   }, [navigate]);
+
+  useEffect(() => {
+    const fetchUnreadCount = async () => {
+      if (user && user.userId) {
+        try {
+          const response = await notificationService.getUnreadNotifications(user.userId);
+          if (response.data) {
+             setUnreadCount(response.data.length);
+          }
+        } catch (error) {
+          console.error("Failed to fetch unread notifications count", error);
+        }
+      }
+    };
+    
+    fetchUnreadCount();
+    const interval = setInterval(fetchUnreadCount, 60000);
+    return () => clearInterval(interval);
+  }, [user]);
 
   const handleDrawerOpen = () => {
     setOpen(true);
@@ -120,6 +145,28 @@ const Home = () => {
       path: `groups/user/${user?.userId}`,
       roles: ['ROLE_ADMIN', 'ROLE_MANAGER', 'ROLE_TELLER', 'ROLE_CUSTOMER'],
     },
+    {
+      text: 'إدارة الفوائد',
+      icon: <PercentIcon />,
+      path: 'interest',
+      roles: ['ROLE_ADMIN', 'ROLE_MANAGER'], 
+    },
+    {
+      text: 'إدارة المستخدمين',
+      icon: <PeopleIcon />,
+      path: 'users',
+      roles: ['ROLE_ADMIN'], 
+    },
+    {
+      text: 'الإشعارات',
+      icon: (
+        <Badge badgeContent={unreadCount} color="error">
+          <NotificationsIcon />
+        </Badge>
+      ),
+      path: 'notifications',
+      roles: ['ROLE_ADMIN', 'ROLE_MANAGER', 'ROLE_TELLER', 'ROLE_CUSTOMER'],
+    },
   ];
 
   if (!user) {
@@ -170,6 +217,17 @@ const Home = () => {
             🏦 SE3 Bank
           </Typography>
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            <IconButton
+               size="large"
+               color="inherit"
+               onClick={() => navigate('notifications')}
+               sx={{ mr: 1 }}
+            >
+              <Badge badgeContent={unreadCount} color="error">
+                <NotificationsIcon />
+              </Badge>
+            </IconButton>
+
             <Typography 
               sx={{ 
                 mr: 2, 

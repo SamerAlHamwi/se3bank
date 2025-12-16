@@ -18,6 +18,9 @@ import GroupTransfer from './components/GroupTransfer';
 import TransactionList from './components/TransactionList';
 import CreateTransaction from './components/CreateTransaction';
 import TransactionDetails from './components/TransactionDetails';
+import InterestManagement from './components/InterestManagement';
+import Notifications from './components/Notifications';
+import UserManagement from './components/UserManagement';
 
 const theme = createTheme({
   direction: 'rtl',
@@ -154,6 +157,9 @@ function App() {
           <Route path="transactions" element={<TransactionList />} />
           <Route path="transactions/create" element={<CreateTransaction />} />
           <Route path="transactions/:transactionId" element={<TransactionDetails />} />
+          <Route path="interest" element={<InterestManagement />} />
+          <Route path="notifications" element={<Notifications />} />
+          <Route path="users" element={<UserManagement />} />
         </Route>
       </Routes>
     </ThemeProvider>

@@ -18,30 +18,21 @@ import {
 import SaveIcon from '@mui/icons-material/Save';
 import CancelIcon from '@mui/icons-material/Cancel';
 import api, { authApi } from '../services/api';
+import bankingService from '../services/bankingService';
 
 const CreateAccount = () => {
   const [formData, setFormData] = useState({
     accountType: '',
     userId: '',
-    initialBalance: 0,
-    interestRate: 0,
-    overdraftLimit: 0,
-    minimumBalance: 0,
-    monthlyWithdrawalLimit: 0,
-    riskLevel: '',
-    investmentType: '',
-    loanAmount: 0,
-    loanTermMonths: 0,
-    annualInterestRate: 0,
+    initialDeposit: 0, // Using initialDeposit to match Facade API
+    currency: 'USD'
   });
-  const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
   useEffect(() => {
-    // For admin/manager/teller, we might need to select user
-    // For now, let's assume they create for themselves or we need user selection
+    // Fetch current user ID to pre-fill
     const fetchCurrentUser = async () => {
       try {
         const response = await authApi.get('/me');
@@ -57,9 +48,7 @@ const CreateAccount = () => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: name.includes('Amount') || name.includes('Balance') || name.includes('Rate') || name.includes('Limit')
-        ? parseFloat(value) || 0
-        : value
+      [name]: name === 'initialDeposit' || name === 'userId' ? parseFloat(value) || 0 : value
     }));
   };
 
@@ -69,7 +58,8 @@ const CreateAccount = () => {
     setError('');
 
     try {
-      await api.post('/accounts', formData);
+      // Use Facade Service to open account
+      await bankingService.openAccount(formData);
       navigate('..');
     } catch (err) {
       setError(err.response?.data?.message || 'فشل في إنشاء الحساب');
@@ -90,19 +80,6 @@ const CreateAccount = () => {
     { value: 'BUSINESS', label: 'حساب تجاري' },
   ];
 
-  const riskLevels = [
-    { value: 'LOW', label: 'منخفض' },
-    { value: 'MEDIUM', label: 'متوسط' },
-    { value: 'HIGH', label: 'عالي' },
-  ];
-
-  const investmentTypes = [
-    { value: 'STOCKS', label: 'أسهم' },
-    { value: 'BONDS', label: 'سندات' },
-    { value: 'MUTUAL_FUNDS', label: 'صناديق استثمار' },
-    { value: 'CRYPTO', label: 'عملات رقمية' },
-  ];
-
   return (
     <Container maxWidth="md">
       <Box sx={{ mb: 4 }}>
@@ -119,7 +96,7 @@ const CreateAccount = () => {
             mb: 3,
           }}
         >
-          إنشاء حساب جديد
+          إنشاء حساب جديد (واجهة مبسطة)
         </Typography>
 
         <Paper 
@@ -202,10 +179,10 @@ const CreateAccount = () => {
               <Grid item xs={12} sm={6}>
                 <TextField
                   fullWidth
-                  label="الرصيد الأولي"
-                  name="initialBalance"
+                  label="الإيداع الأولي"
+                  name="initialDeposit"
                   type="number"
-                  value={formData.initialBalance}
+                  value={formData.initialDeposit}
                   onChange={handleChange}
                   inputProps={{ min: 0, step: 0.01 }}
                   variant="outlined"
@@ -224,257 +201,24 @@ const CreateAccount = () => {
                   }}
                 />
               </Grid>
-
-              <Grid item xs={12} sm={6}>
+               
+               <Grid item xs={12} sm={6}>
                 <TextField
                   fullWidth
-                  label="معدل الفائدة (%)"
-                  name="interestRate"
-                  type="number"
-                  value={formData.interestRate}
+                  label="العملة"
+                  name="currency"
+                  value={formData.currency}
                   onChange={handleChange}
-                  inputProps={{ min: 0, step: 0.01 }}
                   variant="outlined"
+                  disabled
                   sx={{
                     '& .MuiOutlinedInput-root': {
                       borderRadius: 2,
-                      backgroundColor: '#F8FAFC',
-                      '&:hover fieldset': {
-                        borderColor: '#2563EB',
-                      },
-                      '&.Mui-focused fieldset': {
-                        borderColor: '#2563EB',
-                        boxShadow: '0 0 0 3px rgba(37, 99, 235, 0.1)',
-                      },
+                      backgroundColor: '#F0F0F0',
                     },
                   }}
                 />
               </Grid>
-
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  label="حد السحب على المكشوف"
-                  name="overdraftLimit"
-                  type="number"
-                  value={formData.overdraftLimit}
-                  onChange={handleChange}
-                  inputProps={{ min: 0, step: 0.01 }}
-                  variant="outlined"
-                  sx={{
-                    '& .MuiOutlinedInput-root': {
-                      borderRadius: 2,
-                      backgroundColor: '#F8FAFC',
-                      '&:hover fieldset': {
-                        borderColor: '#2563EB',
-                      },
-                      '&.Mui-focused fieldset': {
-                        borderColor: '#2563EB',
-                        boxShadow: '0 0 0 3px rgba(37, 99, 235, 0.1)',
-                      },
-                    },
-                  }}
-                />
-              </Grid>
-
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  label="الحد الأدنى للرصيد"
-                  name="minimumBalance"
-                  type="number"
-                  value={formData.minimumBalance}
-                  onChange={handleChange}
-                  inputProps={{ min: 0, step: 0.01 }}
-                  variant="outlined"
-                  sx={{
-                    '& .MuiOutlinedInput-root': {
-                      borderRadius: 2,
-                      backgroundColor: '#F8FAFC',
-                      '&:hover fieldset': {
-                        borderColor: '#2563EB',
-                      },
-                      '&.Mui-focused fieldset': {
-                        borderColor: '#2563EB',
-                        boxShadow: '0 0 0 3px rgba(37, 99, 235, 0.1)',
-                      },
-                    },
-                  }}
-                />
-              </Grid>
-
-              {/* Savings Account Fields */}
-              {formData.accountType === 'SAVINGS' && (
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    label="حد السحب الشهري"
-                    name="monthlyWithdrawalLimit"
-                    type="number"
-                    value={formData.monthlyWithdrawalLimit}
-                    onChange={handleChange}
-                    inputProps={{ min: 0 }}
-                    variant="outlined"
-                    sx={{
-                      '& .MuiOutlinedInput-root': {
-                        borderRadius: 2,
-                        backgroundColor: '#F8FAFC',
-                        '&:hover fieldset': {
-                          borderColor: '#2563EB',
-                        },
-                        '&.Mui-focused fieldset': {
-                          borderColor: '#2563EB',
-                          boxShadow: '0 0 0 3px rgba(37, 99, 235, 0.1)',
-                        },
-                      },
-                    }}
-                  />
-                </Grid>
-              )}
-
-              {/* Investment Account Fields */}
-              {formData.accountType === 'INVESTMENT' && (
-                <>
-                  <Grid item xs={12} sm={6}>
-                    <FormControl fullWidth>
-                      <InputLabel sx={{ fontSize: '0.95rem' }}>مستوى المخاطر</InputLabel>
-                      <Select
-                        name="riskLevel"
-                        value={formData.riskLevel}
-                        onChange={handleChange}
-                        label="مستوى المخاطر"
-                        sx={{
-                          borderRadius: 2,
-                          backgroundColor: '#F8FAFC',
-                          '&:hover .MuiOutlinedInput-notchedOutline': {
-                            borderColor: '#2563EB',
-                          },
-                          '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                            borderColor: '#2563EB',
-                          },
-                        }}
-                      >
-                        {riskLevels.map((level) => (
-                          <MenuItem key={level.value} value={level.value}>
-                            {level.label}
-                          </MenuItem>
-                        ))}
-                      </Select>
-                    </FormControl>
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <FormControl fullWidth>
-                      <InputLabel sx={{ fontSize: '0.95rem' }}>نوع الاستثمار</InputLabel>
-                      <Select
-                        name="investmentType"
-                        value={formData.investmentType}
-                        onChange={handleChange}
-                        label="نوع الاستثمار"
-                        sx={{
-                          borderRadius: 2,
-                          backgroundColor: '#F8FAFC',
-                          '&:hover .MuiOutlinedInput-notchedOutline': {
-                            borderColor: '#2563EB',
-                          },
-                          '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                            borderColor: '#2563EB',
-                          },
-                        }}
-                      >
-                        {investmentTypes.map((type) => (
-                          <MenuItem key={type.value} value={type.value}>
-                            {type.label}
-                          </MenuItem>
-                        ))}
-                      </Select>
-                    </FormControl>
-                  </Grid>
-                </>
-              )}
-
-              {/* Loan Account Fields */}
-              {formData.accountType === 'LOAN' && (
-                <>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      fullWidth
-                      label="مبلغ القرض"
-                      name="loanAmount"
-                      type="number"
-                      value={formData.loanAmount}
-                      onChange={handleChange}
-                      inputProps={{ min: 0, step: 0.01 }}
-                      required
-                      variant="outlined"
-                      sx={{
-                        '& .MuiOutlinedInput-root': {
-                          borderRadius: 2,
-                          backgroundColor: '#F8FAFC',
-                          '&:hover fieldset': {
-                            borderColor: '#2563EB',
-                          },
-                          '&.Mui-focused fieldset': {
-                            borderColor: '#2563EB',
-                            boxShadow: '0 0 0 3px rgba(37, 99, 235, 0.1)',
-                          },
-                        },
-                      }}
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      fullWidth
-                      label="مدة القرض (أشهر)"
-                      name="loanTermMonths"
-                      type="number"
-                      value={formData.loanTermMonths}
-                      onChange={handleChange}
-                      inputProps={{ min: 1 }}
-                      required
-                      variant="outlined"
-                      sx={{
-                        '& .MuiOutlinedInput-root': {
-                          borderRadius: 2,
-                          backgroundColor: '#F8FAFC',
-                          '&:hover fieldset': {
-                            borderColor: '#2563EB',
-                          },
-                          '&.Mui-focused fieldset': {
-                            borderColor: '#2563EB',
-                            boxShadow: '0 0 0 3px rgba(37, 99, 235, 0.1)',
-                          },
-                        },
-                      }}
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      fullWidth
-                      label="معدل الفائدة السنوي (%)"
-                      name="annualInterestRate"
-                      type="number"
-                      value={formData.annualInterestRate}
-                      onChange={handleChange}
-                      inputProps={{ min: 0, step: 0.01 }}
-                      required
-                      variant="outlined"
-                      sx={{
-                        '& .MuiOutlinedInput-root': {
-                          borderRadius: 2,
-                          backgroundColor: '#F8FAFC',
-                          '&:hover fieldset': {
-                            borderColor: '#2563EB',
-                          },
-                          '&.Mui-focused fieldset': {
-                            borderColor: '#2563EB',
-                            boxShadow: '0 0 0 3px rgba(37, 99, 235, 0.1)',
-                          },
-                        },
-                      }}
-                    />
-                  </Grid>
-                </>
-              )}
 
               <Grid item xs={12}>
                 <Box sx={{ display: 'flex', gap: 2, mt: 2 }}>
