@@ -19,12 +19,9 @@ public class SwaggerConfig {
     public OpenAPI se3BankOpenAPI() {
         Server server = new Server();
         server.setUrl("http://localhost:9090");
-        server.setDescription("خادم التطوير");
+        server.setDescription("SE3 Bank");
 
         Contact contact = new Contact();
-        contact.setEmail("bank@se3.edu");
-        contact.setName("فريق SE3 Bank");
-        contact.setUrl("https://se3bank.com");
 
         License mitLicense = new License()
                 .name("MIT License")
@@ -34,7 +31,7 @@ public class SwaggerConfig {
                 .title("SE3 Bank API")
                 .version("1.0")
                 .contact(contact)
-                .description("واجهة برمجة تطبيقات نظام البنك المتقدم")
+                .description("SE3 Bank API")
                 .termsOfService("https://se3bank.com/terms")
                 .license(mitLicense);
 

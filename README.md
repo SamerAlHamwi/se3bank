@@ -1,5 +1,5 @@
 # SE3 Bank – Backend
-
+mvn spring-boot:run
 ## Overview
 Spring Boot 3 (Java 17) backend for a banking platform featuring accounts, transactions, notifications, interest strategies, and secure JWT + RBAC authentication.
 
@@ -49,7 +49,7 @@ mvn -DskipTests package && java -jar target/se3bank-0.0.1-SNAPSHOT.jar
 ## Docker
 ```bash
 docker build -t se3bank .
-docker run -p 8080:8080 se3bank
+docker run -p 9090:9090 se3bank
 ```
 
 ## Future Improvements
