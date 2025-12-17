@@ -4,6 +4,7 @@ import com.bank.se3bank.transactions.model.Transaction;
 import com.bank.se3bank.shared.enums.TransactionStatus;
 import com.bank.se3bank.shared.enums.TransactionType;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -23,6 +24,9 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
     List<Transaction> findByTransactionType(TransactionType type);
     
     Optional<Transaction> findByTransactionId(String transactionId);
+
+    // دالة لجلب كل المعاملات مرتبة حسب تاريخ الإنشاء تنازلياً (الأحدث أولاً)
+    List<Transaction> findAll(Sort sort);
     
     @Query("SELECT t FROM Transaction t WHERE " +
            "(t.fromAccount.id = :accountId OR t.toAccount.id = :accountId) " +

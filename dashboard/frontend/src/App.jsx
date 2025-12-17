@@ -30,6 +30,8 @@ import Deposit from './pages/manager/Deposit';
 import PendingTransactions from './pages/manager/PendingTransactions';
 import ManagerAccountsList from './pages/manager/ManagerAccountsList';
 import EditAccount from './pages/manager/EditAccount';
+import AllUsers from './pages/manager/AllUsers';
+import AllTransactions from './pages/manager/AllTransactions';
 
 
 const theme = createTheme({
@@ -103,6 +105,8 @@ function App() {
             <Route path="all-accounts" element={<ManagerAccountsList />} />
             <Route path="edit-account/:accountId" element={<EditAccount />} />
             <Route path="check-account" element={<CheckAccount />} />
+            <Route path="all-users" element={<AllUsers />} />
+            <Route path="all-transactions" element={<AllTransactions />} />
         </Route>
 
       </Routes>

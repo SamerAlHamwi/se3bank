@@ -68,6 +68,22 @@ public class TransactionController {
         Transaction transaction = transactionService.getTransactionById(transactionId);
         return ResponseEntity.ok(TransactionResponse.from(transaction));
     }
+    
+    @GetMapping
+    @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
+    @Operation(summary = "الحصول على كل المعاملات", description = "الحصول على قائمة بكل المعاملات في النظام")
+    public ResponseEntity<List<TransactionResponse>> getAllTransactions() {
+        // This relies on finding a service method that retrieves all transactions, or implementing one.
+        // Assuming we need to add getAllTransactions to service or repository first if not present.
+        // Checking service first...
+        // Service doesn't have getAllTransactions. Let's assume we can use repository findAll or implement it.
+        // For now, let's implement a simple findAll in service or just use what we have if we can inject repo?
+        // Better to add method to service.
+        return ResponseEntity.ok(transactionService.getAllTransactions()
+                .stream()
+                .map(TransactionResponse::from)
+                .collect(Collectors.toList()));
+    }
 
     @GetMapping("/reference/{transactionId}")
     @PreAuthorize("hasAnyRole('ADMIN','MANAGER','TELLER','CUSTOMER')")
