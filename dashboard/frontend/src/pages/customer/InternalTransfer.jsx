@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Box, Typography, Paper, Button, CircularProgress, Alert, MenuItem, FormControl, InputLabel, Select } from '@mui/material';
+import {TextField, Box, Typography, Paper, Button, CircularProgress, Alert, MenuItem, FormControl, InputLabel, Select } from '@mui/material';
 import api from '../../services/api';
 
 const InternalTransfer = () => {
@@ -25,7 +25,7 @@ const InternalTransfer = () => {
 
     const fetchUserAccounts = async () => {
       try {
-        const response = await api.get(`/api/accounts/user/${user.id}`);
+        const response = await api.get(`/accounts/user/${user.userId}`);
         setUserAccounts(response.data);
       } catch (err) {
         setError('فشل في جلب حسابات المستخدم');
@@ -33,7 +33,7 @@ const InternalTransfer = () => {
     };
 
     fetchUserAccounts();
-  }, [user, navigate]);
+  }, [navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -56,11 +56,11 @@ const InternalTransfer = () => {
         description
       };
 
-      await api.post('/api/accounts/transfer', request);
+      await api.post('/accounts/transfer', request);
       setSuccess('تم التحويل بنجاح!');
       
       // Refresh account balances in the dropdown
-      const response = await api.get(`/api/accounts/user/${user.id}`);
+      const response = await api.get(`/accounts/user/${user.userId}`);
       setUserAccounts(response.data);
 
       // Clear form

@@ -7,12 +7,17 @@ import com.bank.se3bank.shared.dto.CreateTransactionRequest;
 import com.bank.se3bank.shared.dto.TransactionResponse;
 import com.bank.se3bank.transactions.model.Transaction;
 import com.bank.se3bank.transactions.service.TransactionService;
+import com.bank.se3bank.users.model.User;
+import com.bank.se3bank.shared.enums.Role;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
@@ -80,6 +85,19 @@ public class TransactionController {
             @RequestParam(required = false) LocalDateTime startDate,
             @RequestParam(required = false) LocalDateTime endDate) {
 
+        // التحقق من الملكية أو الصلاحية الإدارية
+        Account account = accountService.getAccountById(accountId);
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        User currentUser = (User) authentication.getPrincipal();
+
+        boolean isOwner = account.getUser().getId().equals(currentUser.getId());
+        boolean hasAuthority = currentUser.hasRole(Role.ROLE_ADMIN) || 
+                               currentUser.hasRole(Role.ROLE_MANAGER);
+
+        if (!isOwner && !hasAuthority) {
+            throw new AccessDeniedException("غير مصرح لك بالاطلاع على معاملات هذا الحساب");
+        }
+
         List<TransactionResponse> transactions = transactionService.getAccountTransactions(
                         accountId, startDate, endDate)
                 .stream()
@@ -94,6 +112,19 @@ public class TransactionController {
     public ResponseEntity<List<TransactionResponse>> getRecentAccountTransactions(
             @PathVariable Long accountId,
             @RequestParam(defaultValue = "10") int limit) {
+
+        // يمكن إضافة نفس التحقق هنا أيضاً لزيادة الأمان
+        Account account = accountService.getAccountById(accountId);
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        User currentUser = (User) authentication.getPrincipal();
+
+        boolean isOwner = account.getUser().getId().equals(currentUser.getId());
+        boolean hasAuthority = currentUser.hasRole(Role.ROLE_ADMIN) || 
+                               currentUser.hasRole(Role.ROLE_MANAGER);
+
+        if (!isOwner && !hasAuthority) {
+            throw new AccessDeniedException("غير مصرح لك بالاطلاع على معاملات هذا الحساب");
+        }
 
         List<TransactionResponse> transactions = transactionService.getRecentTransactions(accountId, limit)
                 .stream()

@@ -20,7 +20,7 @@ const MyTransfers = () => {
       setLoading(true);
       try {
         // Using recent transactions endpoint for the user
-        const response = await api.get(`/api/transactions/user/${user.id}/recent?limit=50`);
+        const response = await api.get(`/transactions/user/${user.userId}/recent?limit=50`);
         setTransactions(response.data);
         setError('');
       } catch (err) {
@@ -31,7 +31,7 @@ const MyTransfers = () => {
     };
 
     fetchTransactions();
-  }, [user, navigate]);
+  }, [navigate]);
 
   if (loading) {
     return <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '80vh' }}><CircularProgress /></Box>;

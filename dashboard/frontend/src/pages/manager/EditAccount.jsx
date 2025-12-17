@@ -20,7 +20,7 @@ const EditAccount = () => {
   useEffect(() => {
     const fetchAccount = async () => {
       try {
-        const response = await api.get(`/api/accounts/${accountId}`);
+        const response = await api.get(`/accounts/${accountId}`);
         const { status, interestRate, overdraftLimit, minimumBalance, balance } = response.data;
         setFormData({ status, interestRate, overdraftLimit, minimumBalance, balance });
       } catch (err) {
@@ -50,7 +50,7 @@ const EditAccount = () => {
         minimumBalance: formData.minimumBalance ? parseFloat(formData.minimumBalance) : null,
         balance: formData.balance ? parseFloat(formData.balance) : null,
       }
-      await api.put(`/api/accounts/${accountId}`, requestData);
+      await api.put(`/accounts/${accountId}`, requestData);
       setSuccess('تم تحديث الحساب بنجاح!');
       setTimeout(() => navigate('/manager/all-accounts'), 1500);
     } catch (err) {

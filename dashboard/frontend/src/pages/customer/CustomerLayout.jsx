@@ -1,7 +1,7 @@
 import React from 'react';
-import { Outlet, useLocation } from 'react-router-dom';
-import { AppBar, Box, Drawer, List, ListItem, ListItemIcon, ListItemText, Toolbar, Typography, Avatar, ListItemButton } from '@mui/material';
-import { Home, SwapHoriz, Receipt, Payment, SyncAlt } from '@mui/icons-material';
+import { Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { AppBar, Box, Drawer, List, ListItem, ListItemIcon, ListItemText, Toolbar, Typography, Avatar, ListItemButton, Divider } from '@mui/material';
+import { Home, SwapHoriz, Receipt, Payment, SyncAlt, Logout } from '@mui/icons-material';
 import { Link } from 'react-router-dom';
 import Notifications from '../../components/Notifications';
 
@@ -18,6 +18,13 @@ const SidebarItems = [
 const CustomerLayout = () => {
   const user = JSON.parse(localStorage.getItem('user'));
   const location = useLocation();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    localStorage.removeItem('user');
+    localStorage.removeItem('token');
+    navigate('/login');
+  };
 
   return (
     <Box sx={{ display: 'flex' }}>
@@ -57,6 +64,24 @@ const CustomerLayout = () => {
               </ListItemButton>
             </ListItem>
           ))}
+          
+          <Divider sx={{ my: 2, borderColor: '#374151' }} />
+          
+          <ListItem disablePadding>
+            <ListItemButton 
+              onClick={handleLogout}
+              sx={{
+                borderRadius: '8px',
+                color: '#EF4444',
+                '&:hover': { backgroundColor: 'rgba(239, 68, 68, 0.1)' }
+              }}
+            >
+              <ListItemIcon sx={{ color: '#EF4444', minWidth: '40px' }}>
+                <Logout />
+              </ListItemIcon>
+              <ListItemText primary="تسجيل الخروج" />
+            </ListItemButton>
+          </ListItem>
         </List>
       </Drawer>
       <Box

@@ -12,7 +12,7 @@ const InterestManager = ({ accountId }) => {
 
     const fetchReport = async () => {
         try {
-            const reportResponse = await api.get(`/api/interest/report/${accountId}`);
+            const reportResponse = await api.get(`/interest/report/${accountId}`);
             setReport(reportResponse.data);
             setSelectedStrategy(reportResponse.data.currentStrategy);
         } catch (err) {
@@ -22,7 +22,7 @@ const InterestManager = ({ accountId }) => {
 
     const fetchStrategies = async () => {
         try {
-            const strategiesResponse = await api.get('/api/interest/strategies');
+            const strategiesResponse = await api.get('/interest/strategies');
             setStrategies(strategiesResponse.data);
         } catch (err) {
             setError('فشل في تحميل استراتيجيات الفائدة');
@@ -39,7 +39,7 @@ const InterestManager = ({ accountId }) => {
         setError('');
         setSuccess('');
         try {
-            await api.post(`/api/interest/strategy/${accountId}`, { strategyName: selectedStrategy });
+            await api.post(`/interest/strategy/${accountId}`, { strategyName: selectedStrategy });
             setSuccess('تم تغيير استراتيجية الفائدة بنجاح!');
             fetchReport(); // Refresh report to show updated strategy
         } catch (err) {

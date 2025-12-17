@@ -14,7 +14,7 @@ const PendingTransactions = () => {
   const fetchPendingTransactions = async () => {
     setLoading(true);
     try {
-      const response = await api.get('/api/transactions/pending-approval');
+      const response = await api.get('/transactions/pending-approval');
       setTransactions(response.data);
       setError('');
     } catch (err) {
@@ -30,7 +30,7 @@ const PendingTransactions = () => {
 
   const handleApprove = async (transactionId) => {
     try {
-      await api.post(`/api/transactions/${transactionId}/approve`, { managerId: user.id, comments: 'Approved' });
+      await api.post(`/transactions/${transactionId}/approve`, { managerId: user.id, comments: 'Approved' });
       fetchPendingTransactions(); // Re-fetch the list
     } catch (err) {
       setError('فشل في الموافقة على المعاملة');
@@ -51,7 +51,7 @@ const PendingTransactions = () => {
   const handleReject = async () => {
     if (!selectedTx || !rejectionReason) return;
     try {
-      await api.post(`/api/transactions/${selectedTx.transactionId}/reject`, {
+      await api.post(`/transactions/${selectedTx.transactionId}/reject`, {
         managerId: user.id,
         reason: rejectionReason,
         comments: 'Rejected by manager'
@@ -65,7 +65,7 @@ const PendingTransactions = () => {
 
   const handleProcessAll = async () => {
       try {
-          await api.post('/api/transactions/process-pending');
+          await api.post('/transactions/process-pending');
           fetchPendingTransactions();
       } catch (err) {
           setError('فشل في معالجة المعاملات المعلقة');

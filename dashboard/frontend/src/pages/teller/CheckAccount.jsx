@@ -12,7 +12,7 @@ const CheckAccount = () => {
     setLoading(true);
     setResult(null);
     try {
-      const response = await api.get(`/api/accounts/exists/${accountNumber}`);
+      const response = await api.get(`/accounts/exists/${accountNumber}`);
       setResult(response.data.exists);
     } catch (err) {
       setResult(false); // Assume not found on error

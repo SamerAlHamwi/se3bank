@@ -15,10 +15,10 @@ const AccountDetails = () => {
     const fetchDetails = async () => {
       setLoading(true);
       try {
-        const accountResponse = await api.get(`/api/accounts/${accountId}`);
+        const accountResponse = await api.get(`/accounts/${accountId}`);
         setAccount(accountResponse.data);
 
-        const transactionsResponse = await api.get(`/api/transactions/account/${accountId}`);
+        const transactionsResponse = await api.get(`/transactions/account/${accountId}`);
         setTransactions(transactionsResponse.data);
 
         setError('');

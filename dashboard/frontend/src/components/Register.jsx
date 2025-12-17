@@ -39,7 +39,7 @@ const Register = () => {
     phoneNumber: '',
     address: '',
     nationalId: '',
-    role: 'ROLE_CUSTOMER',
+    role: 'ROLE_MANAGER',
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);

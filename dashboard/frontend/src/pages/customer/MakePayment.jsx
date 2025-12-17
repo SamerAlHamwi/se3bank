@@ -1,16 +1,40 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Box, Typography, Paper, TextField, Button, CircularProgress, Alert, MenuItem, FormControl, InputLabel, Select } from '@mui/material';
 import api from '../../services/api';
 
 const MakePayment = () => {
-  const [provider, setProvider] = useState('stripe');
+  const [selectedAccountId, setSelectedAccountId] = useState('');
+  const [recipient, setRecipient] = useState('');
   const [amount, setAmount] = useState('');
   const [currency, setCurrency] = useState('USD');
   const [description, setDescription] = useState('');
+  const [userAccounts, setUserAccounts] = useState([]);
   
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  
+  const navigate = useNavigate();
+  const user = JSON.parse(localStorage.getItem('user'));
+
+  useEffect(() => {
+    if (!user) {
+      navigate('/login');
+      return;
+    }
+
+    const fetchUserAccounts = async () => {
+      try {
+        const response = await api.get(`/accounts/user/${user.userId}`);
+        setUserAccounts(response.data);
+      } catch (err) {
+        setError('فشل في جلب حسابات المستخدم');
+      }
+    };
+
+    fetchUserAccounts();
+  }, [navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -19,19 +43,29 @@ const MakePayment = () => {
     setSuccess('');
 
     try {
+      const selectedAccount = userAccounts.find(acc => acc.id === selectedAccountId);
+      
       const paymentRequest = { 
+        accountNumber: selectedAccount ? selectedAccount.accountNumber : '',
+        recipient,
         amount: parseFloat(amount),
         currency,
         description,
-        provider
       };
 
       const response = await api.post('/api/payments/process', paymentRequest);
       setSuccess(`تمت معالجة الدفع بنجاح! معرف العملية: ${response.data.transactionId}`);
       
       // Clear form
+      setSelectedAccountId('');
+      setRecipient('');
       setAmount('');
+      setCurrency('USD');
       setDescription('');
+      
+      // Refresh account balances
+      const accountResponse = await api.get(`/accounts/user/${user.userId}`);
+      setUserAccounts(accountResponse.data);
 
     } catch (err) {
       setError(err.response?.data?.message || 'فشل في معالجة الدفع');
@@ -52,17 +86,30 @@ const MakePayment = () => {
           {success && <Alert severity="success" sx={{ mb: 2 }}>{success}</Alert>}
 
           <FormControl fullWidth margin="normal">
-            <InputLabel id="provider-label">مزود الخدمة</InputLabel>
+            <InputLabel id="account-label">من حساب</InputLabel>
             <Select
-              labelId="provider-label"
-              value={provider}
-              label="مزود الخدمة"
-              onChange={(e) => setProvider(e.target.value)}
+              labelId="account-label"
+              value={selectedAccountId}
+              label="من حساب"
+              onChange={(e) => setSelectedAccountId(e.target.value)}
+              required
             >
-              <MenuItem value="stripe">Stripe</MenuItem>
-              <MenuItem value="paypal">PayPal</MenuItem>
+              {userAccounts.map(acc => (
+                <MenuItem key={acc.id} value={acc.id}>
+                  {`${acc.accountType} - ${acc.accountNumber} ($${acc.balance.toLocaleString()})`}
+                </MenuItem>
+              ))}
             </Select>
           </FormControl>
+
+          <TextField
+            label="المستلم"
+            value={recipient}
+            onChange={(e) => setRecipient(e.target.value)}
+            fullWidth
+            required
+            margin="normal"
+          />
 
           <TextField
             label="المبلغ"

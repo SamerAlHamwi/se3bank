@@ -26,7 +26,7 @@ const Withdraw = () => {
       };
 
       // The backend endpoint for creating a transaction can handle this
-      const response = await api.post('/api/transactions', request);
+      const response = await api.post('/transactions', request);
       setSuccess(`تمت عملية السحب بنجاح! معرف المعاملة: ${response.data.transactionId}`);
       
       // Clear form

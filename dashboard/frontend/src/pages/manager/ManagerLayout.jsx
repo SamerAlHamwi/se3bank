@@ -1,9 +1,9 @@
 import React from 'react';
-import { Outlet, useLocation } from 'react-router-dom';
+import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { AppBar, Box, Drawer, List, ListItem, ListItemIcon, ListItemText, Toolbar, Typography, Avatar, ListItemButton, Divider } from '@mui/material';
 import {
   Home, SwapHoriz, Receipt, Payment, SyncAlt, PersonAdd, People, FactCheck, 
-  AccountBalanceWallet, CallMade, CallReceived, PlaylistAddCheck
+  AccountBalanceWallet, CallMade, CallReceived, PlaylistAddCheck, Logout
 } from '@mui/icons-material';
 import { Link } from 'react-router-dom';
 import Notifications from '../../components/Notifications';
@@ -29,6 +29,13 @@ const managerActions = [
 const ManagerLayout = () => {
   const user = JSON.parse(localStorage.getItem('user'));
   const location = useLocation();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    localStorage.removeItem('user');
+    localStorage.removeItem('token');
+    navigate('/login');
+  };
 
   const renderList = (items) => items.map((item) => (
     <ListItem key={item.text} disablePadding sx={{ mb: 1 }}>
@@ -79,6 +86,26 @@ const ManagerLayout = () => {
         <List sx={{ px: 2 }}>
             <Typography variant="overline" sx={{ color: '#6B7280', pl: 2, fontWeight: 'bold' }}>عمليات المدير</Typography>
             {renderList(managerActions)}
+        </List>
+
+        <Divider sx={{ my: 2, borderColor: '#374151' }} />
+          
+        <List sx={{ px: 2 }}>
+          <ListItem disablePadding>
+            <ListItemButton 
+              onClick={handleLogout}
+              sx={{
+                borderRadius: '8px',
+                color: '#EF4444',
+                '&:hover': { backgroundColor: 'rgba(239, 68, 68, 0.1)' }
+              }}
+            >
+              <ListItemIcon sx={{ color: '#EF4444', minWidth: '40px' }}>
+                <Logout />
+              </ListItemIcon>
+              <ListItemText primary="تسجيل الخروج" />
+            </ListItemButton>
+          </ListItem>
         </List>
       </Drawer>
       <Box

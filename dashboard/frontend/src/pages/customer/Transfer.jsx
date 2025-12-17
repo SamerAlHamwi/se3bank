@@ -25,7 +25,7 @@ const Transfer = () => {
 
     const fetchUserAccounts = async () => {
       try {
-        const response = await api.get(`/api/accounts/user/${user.id}`);
+        const response = await api.get(`/accounts/user/${user.userId}`);
         setUserAccounts(response.data);
       } catch (err) {
         setError('فشل في جلب حسابات المستخدم');
@@ -49,7 +49,7 @@ const Transfer = () => {
         description
       };
 
-      await api.post('/api/accounts/transfer', request);
+      await api.post('/accounts/transfer', request);
       setSuccess('تم طلب التحويل بنجاح! قد يتطلب الأمر موافقة المدير.');
       
       // Clear form

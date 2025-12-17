@@ -25,9 +25,9 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
     Optional<Transaction> findByTransactionId(String transactionId);
     
     @Query("SELECT t FROM Transaction t WHERE " +
-           "(:accountId IS NULL OR t.fromAccount.id = :accountId OR t.toAccount.id = :accountId) " +
-           "AND (:startDate IS NULL OR t.createdAt >= :startDate) " +
-           "AND (:endDate IS NULL OR t.createdAt <= :endDate) " +
+           "(t.fromAccount.id = :accountId OR t.toAccount.id = :accountId) " +
+           "AND (cast(:startDate as timestamp) IS NULL OR t.createdAt >= :startDate) " +
+           "AND (cast(:endDate as timestamp) IS NULL OR t.createdAt <= :endDate) " +
            "ORDER BY t.createdAt DESC")
     List<Transaction> findTransactionsByAccountAndDateRange(
             @Param("accountId") Long accountId,

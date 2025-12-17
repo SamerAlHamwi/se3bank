@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { IconButton, Badge, Menu, MenuItem, Typography, Box, ListItemText, Divider, CircularProgress } from '@mui/material';
 import { Notifications as NotificationsIcon, Markunread as MarkunreadIcon } from '@mui/icons-material';
 import api from '../services/api';
@@ -8,29 +8,38 @@ const Notifications = () => {
     const [notifications, setNotifications] = useState([]);
     const [loading, setLoading] = useState(false);
     const user = JSON.parse(localStorage.getItem('user'));
+    
+    // Use a ref to store user ID to avoid dependency loop if user object changes reference
+    const userId = user ? user.userId : null;
 
     const fetchNotifications = async () => {
-        if (!user) return;
-        setLoading(true);
+        if (!userId) return;
+        // Don't set loading state for background polling to avoid UI flickering
+        // Only set it if it's the first load or manual refresh
         try {
-            const response = await api.get(`/api/notifications/user/${user.id}/unread`);
+            const response = await api.get(`/notifications/user/${userId}/unread`);
             setNotifications(response.data);
         } catch (error) {
             console.error("Failed to fetch notifications", error);
-        } finally {
-            setLoading(false);
         }
     };
 
     useEffect(() => {
+        if (!userId) return;
+
+        // Initial fetch
         fetchNotifications();
-        const interval = setInterval(fetchNotifications, 60000); // Poll every minute
+        
+        // Poll every minute
+        const interval = setInterval(fetchNotifications, 60000); 
+        
         return () => clearInterval(interval);
-    }, [user]);
+    }, [userId]); // Only depend on userId, not the whole user object
 
     const handleOpen = (event) => {
         setAnchorEl(event.currentTarget);
-        fetchNotifications(); // Refresh on open
+        // Optional: fetch on open if you want immediate fresh data
+        // fetchNotifications(); 
     };
 
     const handleClose = () => {
@@ -39,7 +48,7 @@ const Notifications = () => {
 
     const handleMarkAsRead = async (notificationId) => {
         try {
-            await api.patch(`/api/notifications/${notificationId}/read`);
+            await api.patch(`/notifications/${notificationId}/read`);
             setNotifications(notifications.filter(n => n.id !== notificationId));
         } catch (error) {
             console.error("Failed to mark notification as read", error);

@@ -25,7 +25,7 @@ const Deposit = () => {
         transactionType: 'DEPOSIT'
       };
 
-      const response = await api.post('/api/transactions', request);
+      const response = await api.post('/transactions', request);
       setSuccess(`تمت عملية الإيداع بنجاح! معرف المعاملة: ${response.data.transactionId}`);
       
       // Clear form

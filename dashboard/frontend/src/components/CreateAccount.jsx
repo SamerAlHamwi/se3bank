@@ -17,7 +17,7 @@ import {
 } from '@mui/material';
 import SaveIcon from '@mui/icons-material/Save';
 import CancelIcon from '@mui/icons-material/Cancel';
-import api, { authApi } from '../services/api';
+import api from '../services/api';
 
 const CreateAccount = () => {
   const [formData, setFormData] = useState({
@@ -40,17 +40,15 @@ const CreateAccount = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // For admin/manager/teller, we might need to select user
-    // For now, let's assume they create for themselves or we need user selection
-    const fetchCurrentUser = async () => {
+    const fetchUsers = async () => {
       try {
-        const response = await authApi.get('/me');
-        setFormData(prev => ({ ...prev, userId: response.data.userId }));
+        const response = await api.get('/users');
+        setUsers(response.data);
       } catch (err) {
-        setError('فشل في تحميل بيانات المستخدم');
+        setError('فشل في تحميل قائمة المستخدمين');
       }
     };
-    fetchCurrentUser();
+    fetchUsers();
   }, []);
 
   const handleChange = (e) => {
@@ -59,7 +57,7 @@ const CreateAccount = () => {
       ...prev,
       [name]: name.includes('Amount') || name.includes('Balance') || name.includes('Rate') || name.includes('Limit')
         ? parseFloat(value) || 0
-        : value
+        : (value === undefined || value === null ? '' : value)
     }));
   };
 
@@ -174,29 +172,31 @@ const CreateAccount = () => {
               </Grid>
 
               <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  label="معرف المستخدم"
-                  name="userId"
-                  type="number"
-                  value={formData.userId}
-                  onChange={handleChange}
-                  required
-                  variant="outlined"
-                  sx={{
-                    '& .MuiOutlinedInput-root': {
+                <FormControl fullWidth required>
+                  <InputLabel sx={{ fontSize: '0.95rem' }}>المستخدم</InputLabel>
+                  <Select
+                    name="userId"
+                    value={formData.userId}
+                    onChange={handleChange}
+                    label="المستخدم"
+                    sx={{
                       borderRadius: 2,
                       backgroundColor: '#F8FAFC',
-                      '&:hover fieldset': {
+                      '&:hover .MuiOutlinedInput-notchedOutline': {
                         borderColor: '#2563EB',
                       },
-                      '&.Mui-focused fieldset': {
+                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
                         borderColor: '#2563EB',
-                        boxShadow: '0 0 0 3px rgba(37, 99, 235, 0.1)',
                       },
-                    },
-                  }}
-                />
+                    }}
+                  >
+                    {users.map((user) => (
+                      <MenuItem key={user.id} value={user.id}>
+                        {user.username} ({user.id})
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
               </Grid>
 
               <Grid item xs={12} sm={6}>

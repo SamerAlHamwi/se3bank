@@ -17,7 +17,7 @@ const ManagerAccountsList = () => {
   const fetchAccounts = async () => {
     setLoading(true);
     try {
-      const response = await api.get('/api/accounts');
+      const response = await api.get('/accounts');
       setAccounts(response.data);
     } catch (err) {
       setError('فشل في تحميل الحسابات');
@@ -42,7 +42,7 @@ const ManagerAccountsList = () => {
 
   const handleUpdateStatus = async (status) => {
     try {
-      await api.patch(`/api/accounts/${selectedAccount.id}/status?status=${status}`);
+      await api.patch(`/accounts/${selectedAccount.id}/status?status=${status}`);
       handleMenuClose();
       fetchAccounts(); // Refresh the list
     } catch (err) {
@@ -95,7 +95,7 @@ const ManagerAccountsList = () => {
                 <TableCell>نوع الحساب</TableCell>
                 <TableCell>الحالة</TableCell>
                 <TableCell align="right">الرصيد</TableCell>
-                <TableCell>المالك</TableCell>
+                <TableCell>رقم المستخدم</TableCell>
                 <TableCell align="center">إجراءات</TableCell>
               </TableRow>
             </TableHead>
@@ -106,7 +106,7 @@ const ManagerAccountsList = () => {
                   <TableCell>{account.accountType}</TableCell>
                   <TableCell>{getStatusChip(account.status)}</TableCell>
                   <TableCell align="right" sx={{ fontWeight: 'bold', color: '#10B981' }}>${account.balance.toLocaleString()}</TableCell>
-                  <TableCell>{`${account.user.firstName} ${account.user.lastName}`}</TableCell>
+                  <TableCell>{account.userId}</TableCell>
                   <TableCell align="center">
                     <Tooltip title="خيارات إضافية">
                       <IconButton onClick={(e) => handleMenuClick(e, account)}>

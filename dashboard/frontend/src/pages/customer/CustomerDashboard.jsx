@@ -10,9 +10,10 @@ const CustomerDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const navigate = useNavigate();
-  const user = JSON.parse(localStorage.getItem('user'));
 
   useEffect(() => {
+    const user = JSON.parse(localStorage.getItem('user'));
+    
     if (!user) {
       navigate('/login');
       return;
@@ -22,11 +23,11 @@ const CustomerDashboard = () => {
       setLoading(true);
       try {
         // Fetch user accounts
-        const accountsResponse = await api.get(`/api/accounts/user/${user.id}`);
+        const accountsResponse = await api.get(`/accounts/user/${user.userId}`);
         setAccounts(accountsResponse.data);
 
         // Fetch total balance
-        const totalBalanceResponse = await api.get(`/api/accounts/user/${user.id}/total-balance`);
+        const totalBalanceResponse = await api.get(`/accounts/user/${user.userId}/total-balance`);
         setTotalBalance(totalBalanceResponse.data.totalBalance);
         
         setError('');
@@ -38,7 +39,7 @@ const CustomerDashboard = () => {
     };
 
     fetchDashboardData();
-  }, [user, navigate]);
+  }, [navigate]);
 
   if (loading) {
     return <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '80vh' }}><CircularProgress /></Box>;

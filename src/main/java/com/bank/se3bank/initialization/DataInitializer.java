@@ -1,4 +1,3 @@
-// 📁 src/main/java/com/bank/se3bank/initialization/DataInitializer.java
 package com.bank.se3bank.initialization;
 
 import com.bank.se3bank.accounts.model.Account;
