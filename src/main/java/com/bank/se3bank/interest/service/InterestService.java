@@ -155,6 +155,9 @@ public class InterestService {
      */
     public Map<String, com.bank.se3bank.interest.strategy.InterestStrategy> 
             getSupportedStrategies(AccountType accountType) {
+        if (accountType == null) {
+            return interestCalculator.getAllStrategies();
+        }
         return interestCalculator.getSupportedStrategies(accountType);
     }
     
@@ -217,9 +220,6 @@ public class InterestService {
         return monthlyRate * 12;
     }
     
-    // ========== Helper Methods ==========
-    
-    // 📁 src/main/java/com/bank/se3bank/interest/service/InterestService.java (الجزء المصحح)
     // ========== Helper Methods ==========
     
     private boolean isAccountEligibleForInterest(Account account) {

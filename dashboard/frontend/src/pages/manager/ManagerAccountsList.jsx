@@ -140,7 +140,7 @@ const ManagerAccountsList = () => {
       <Dialog open={interestModalOpen} onClose={handleCloseInterestManager} fullWidth maxWidth="sm">
         <DialogTitle>إدارة الفائدة للحساب: {selectedAccount?.accountNumber}</DialogTitle>
         <DialogContent>
-          {selectedAccount && <InterestManager accountId={selectedAccount.id} />}
+          {selectedAccount && <InterestManager accountId={selectedAccount.id} accountType={selectedAccount.accountType} />}
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseInterestManager}>إغلاق</Button>

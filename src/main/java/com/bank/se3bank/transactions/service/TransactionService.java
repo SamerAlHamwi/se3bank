@@ -1,6 +1,7 @@
 package com.bank.se3bank.transactions.service;
 
 import com.bank.se3bank.accounts.model.Account;
+import com.bank.se3bank.accounts.repository.AccountRepository;
 import com.bank.se3bank.notifications.service.NotificationService;
 import com.bank.se3bank.shared.enums.TransactionStatus;
 import com.bank.se3bank.shared.enums.TransactionType;
@@ -30,6 +31,7 @@ public class TransactionService {
     private final ApprovalChainFactory approvalChainFactory;
     private final NotificationService notificationService;
     private final UserService userService;
+    private final AccountRepository accountRepository;
     
     // ========== Create Transactions ==========
     
@@ -137,6 +139,11 @@ public class TransactionService {
             // تشغيل السلسلة
             boolean processedSuccessfully = approvalChain.handle(transaction);
             
+            // تحديث الأرصدة إذا اكتملت المعاملة
+            if (transaction.getStatus() == TransactionStatus.COMPLETED) {
+                updateAccountBalances(transaction);
+            }
+            
             // حفظ المعاملة
             Transaction savedTransaction = transactionRepository.save(transaction);
             
@@ -163,6 +170,47 @@ public class TransactionService {
     }
     
     /**
+     * تحديث أرصدة الحسابات بناءً على نوع المعاملة
+     */
+    private void updateAccountBalances(Transaction transaction) {
+        log.info("💰 تحديث الأرصدة للمعاملة {}", transaction.getTransactionId());
+        
+        switch (transaction.getTransactionType()) {
+            case DEPOSIT -> {
+                Account to = transaction.getToAccount();
+                if (to != null) {
+                    to.deposit(transaction.getAmount());
+                    accountRepository.save(to);
+                }
+            }
+            case WITHDRAWAL -> {
+                Account from = transaction.getFromAccount();
+                if (from != null) {
+                    from.withdraw(transaction.getAmount());
+                    accountRepository.save(from);
+                }
+            }
+            case TRANSFER -> {
+                Account from = transaction.getFromAccount();
+                Account to = transaction.getToAccount();
+                if (from != null && to != null) {
+                    from.withdraw(transaction.getAmount());
+                    to.deposit(transaction.getAmount());
+                    accountRepository.save(from);
+                    accountRepository.save(to);
+                }
+            }
+            case PAYMENT -> {
+                Account from = transaction.getFromAccount();
+                if (from != null) {
+                    from.withdraw(transaction.getAmount());
+                    accountRepository.save(from);
+                }
+            }
+        }
+    }
+    
+    /**
      * اعتماد معاملة بواسطة المدير
      */
     @Transactional
@@ -185,6 +233,11 @@ public class TransactionService {
         // استخدام ManagerApprovalHandler
         ManagerApprovalHandler managerHandler = new ManagerApprovalHandler();
         managerHandler.approveTransaction(transaction, managerId);
+        
+        // تحديث الأرصدة إذا اكتملت المعاملة
+        if (transaction.getStatus() == TransactionStatus.COMPLETED) {
+            updateAccountBalances(transaction);
+        }
         
         Transaction savedTransaction = transactionRepository.save(transaction);
         

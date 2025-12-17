@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Box, Typography, CircularProgress, Alert, Grid, Select, MenuItem, Button, FormControl, InputLabel } from '@mui/material';
 import api from '../../services/api';
 
-const InterestManager = ({ accountId }) => {
+const InterestManager = ({ accountId, accountType }) => {
     const [report, setReport] = useState(null);
     const [strategies, setStrategies] = useState({});
     const [selectedStrategy, setSelectedStrategy] = useState('');
@@ -12,8 +12,9 @@ const InterestManager = ({ accountId }) => {
 
     const fetchReport = async () => {
         try {
-            const reportResponse = await api.get(`/interest/report/${accountId}`);
+            const reportResponse = await api.get(`/interest/accounts/${accountId}/report`);
             setReport(reportResponse.data);
+            // Check if currentStrategy is a valid key in strategies, otherwise try to match by name or default
             setSelectedStrategy(reportResponse.data.currentStrategy);
         } catch (err) {
             setError('فشل في تحميل تقرير الفائدة');
@@ -22,7 +23,8 @@ const InterestManager = ({ accountId }) => {
 
     const fetchStrategies = async () => {
         try {
-            const strategiesResponse = await api.get('/interest/strategies');
+            const endpoint = accountType ? `/interest/strategies/${accountType}` : '/interest/strategies';
+            const strategiesResponse = await api.get(endpoint);
             setStrategies(strategiesResponse.data);
         } catch (err) {
             setError('فشل في تحميل استراتيجيات الفائدة');
@@ -31,15 +33,21 @@ const InterestManager = ({ accountId }) => {
 
     useEffect(() => {
         setLoading(true);
-        Promise.all([fetchReport(), fetchStrategies()]).finally(() => setLoading(false));
-    }, [accountId]);
+        // Fetch strategies first, then report to ensure we can map strategy names correctly if needed
+        const loadData = async () => {
+            await fetchStrategies();
+            await fetchReport();
+            setLoading(false);
+        };
+        loadData();
+    }, [accountId, accountType]);
 
     const handleStrategyChange = async () => {
         setLoading(true);
         setError('');
         setSuccess('');
         try {
-            await api.post(`/interest/strategy/${accountId}`, { strategyName: selectedStrategy });
+            await api.post(`/interest/accounts/${accountId}/change-strategy`, { strategyName: selectedStrategy });
             setSuccess('تم تغيير استراتيجية الفائدة بنجاح!');
             fetchReport(); // Refresh report to show updated strategy
         } catch (err) {
@@ -84,8 +92,10 @@ const InterestManager = ({ accountId }) => {
                             onChange={(e) => setSelectedStrategy(e.target.value)}
                             label="استراتيجية الفائدة الحالية"
                         >
-                            {Object.entries(strategies).map(([key, name]) => (
-                                <MenuItem key={key} value={key}>{name}</MenuItem>
+                            {Object.entries(strategies).map(([key, strategyObj]) => (
+                                <MenuItem key={key} value={key}>
+                                    {strategyObj.strategyName || strategyObj.name || key}
+                                </MenuItem>
                             ))}
                         </Select>
                     </FormControl>

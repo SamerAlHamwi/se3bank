@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
-import { Box, Typography, Paper, TextField, Button, CircularProgress, Alert } from '@mui/material';
+import React, { useState, useEffect } from 'react';
+import { Box, Typography, Paper, TextField, Button, CircularProgress, Alert, Autocomplete } from '@mui/material';
 import api from '../../services/api';
 
 const Deposit = () => {
-  const [accountNumber, setAccountNumber] = useState('');
+  const [accounts, setAccounts] = useState([]);
+  const [selectedAccount, setSelectedAccount] = useState(null);
   const [amount, setAmount] = useState('');
   const [description, setDescription] = useState('');
   
@@ -11,15 +12,32 @@ const Deposit = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
+  useEffect(() => {
+    const fetchAccounts = async () => {
+      try {
+        const response = await api.get('/accounts');
+        setAccounts(response.data);
+      } catch (err) {
+        console.error('فشل في تحميل الحسابات', err);
+      }
+    };
+    fetchAccounts();
+  }, []);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!selectedAccount) {
+      setError('الرجاء اختيار الحساب');
+      return;
+    }
+
     setLoading(true);
     setError('');
     setSuccess('');
 
     try {
       const request = { 
-        toAccountNumber: accountNumber,
+        toAccountNumber: selectedAccount.accountNumber,
         amount: parseFloat(amount),
         description,
         transactionType: 'DEPOSIT'
@@ -29,7 +47,7 @@ const Deposit = () => {
       setSuccess(`تمت عملية الإيداع بنجاح! معرف المعاملة: ${response.data.transactionId}`);
       
       // Clear form
-      setAccountNumber('');
+      setSelectedAccount(null);
       setAmount('');
       setDescription('');
 
@@ -51,13 +69,33 @@ const Deposit = () => {
           {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
           {success && <Alert severity="success" sx={{ mb: 2 }}>{success}</Alert>}
 
-          <TextField
-            label="رقم الحساب للإيداع فيه"
-            value={accountNumber}
-            onChange={(e) => setAccountNumber(e.target.value)}
-            fullWidth
-            required
-            margin="normal"
+          <Autocomplete
+            options={accounts}
+            getOptionLabel={(option) => `${option.accountNumber} (${option.accountType}) - $${option.balance}`}
+            value={selectedAccount}
+            onChange={(event, newValue) => {
+              setSelectedAccount(newValue);
+            }}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                label="رقم الحساب للإيداع فيه"
+                required
+                margin="normal"
+                fullWidth
+              />
+            )}
+            renderOption={(props, option) => (
+                <li {...props} key={option.id}>
+                    <Box>
+                        <Typography variant="body1">{option.accountNumber}</Typography>
+                        <Typography variant="caption" color="text.secondary">
+                             نوع: {option.accountType} | الرصيد: ${option.balance} | مستخدم: {option.userId}
+                        </Typography>
+                    </Box>
+                </li>
+            )}
+            noOptionsText="لا توجد حسابات"
           />
 
           <TextField

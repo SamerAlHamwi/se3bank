@@ -32,7 +32,8 @@ public class FraudDetectionHandler extends TransactionHandler {
             logApproval(transaction, "تم اكتشاف عدد كبير من المعاملات في فترة قصيرة");
             transaction.markAsPendingApproval();
             log.warn("⚠️ {}: تتطلب اعتماداً إضافياً (تردد عالي)", handlerName);
-            return true; // لا نرفض، بل نطلب اعتماد
+            // Even if flagged, pass it to next handler to finish checks or save status
+            return passToNext(transaction);
         }
         
         // 2. التحقق من المبالغ الكبيرة
@@ -40,7 +41,8 @@ public class FraudDetectionHandler extends TransactionHandler {
             logApproval(transaction, "معاملة بمبلغ كبير تتطلب اعتماداً إضافياً");
             transaction.markAsPendingApproval();
             log.warn("⚠️ {}: تتطلب اعتماداً إضافياً (مبلغ كبير)", handlerName);
-            return true;
+             // Even if flagged, pass it to next handler
+            return passToNext(transaction);
         }
         
         // 3. التحقق من المعاملات في أوقات غير اعتيادية
