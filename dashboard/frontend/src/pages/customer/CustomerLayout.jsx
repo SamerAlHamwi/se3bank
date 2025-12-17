@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { AppBar, Box, Drawer, List, ListItem, ListItemIcon, ListItemText, Toolbar, Typography, Avatar, ListItemButton, Divider } from '@mui/material';
-import { Home, SwapHoriz, Receipt, Payment, SyncAlt, Logout } from '@mui/icons-material';
+import { AppBar, Box, Drawer, List, ListItem, ListItemIcon, ListItemText, Toolbar, Typography, Avatar, ListItemButton, Divider, IconButton } from '@mui/material';
+import { Home, SwapHoriz, Receipt, Payment, SyncAlt, Logout, Menu as MenuIcon } from '@mui/icons-material';
 import { Link } from 'react-router-dom';
 import Notifications from '../../components/Notifications';
 
@@ -19,6 +19,11 @@ const CustomerLayout = () => {
   const user = JSON.parse(localStorage.getItem('user'));
   const location = useLocation();
   const navigate = useNavigate();
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  const handleDrawerToggle = () => {
+    setMobileOpen(!mobileOpen);
+  };
 
   const handleLogout = () => {
     localStorage.removeItem('user');
@@ -26,12 +31,8 @@ const CustomerLayout = () => {
     navigate('/login');
   };
 
-  return (
-    <Box sx={{ display: 'flex' }}>
-      <Drawer
-        variant="permanent"
-        sx={{ width: drawerWidth, flexShrink: 0, [`& .MuiDrawer-paper`]: { width: drawerWidth, boxSizing: 'border-box', backgroundColor: '#111827', color: '#E5E7EB'} }}
-      >
+  const drawer = (
+    <div>
         <Toolbar sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px', flexDirection: 'column' }}>
             <Avatar sx={{ width: 64, height: 64, mb: 2, bgcolor: '#4F46E5' }}>
               {user?.username?.charAt(0).toUpperCase()}
@@ -83,20 +84,71 @@ const CustomerLayout = () => {
             </ListItemButton>
           </ListItem>
         </List>
-      </Drawer>
+    </div>
+  );
+
+  return (
+    <Box sx={{ display: 'flex' }}>
+      <AppBar
+        position="fixed"
+        sx={{
+          width: { sm: `calc(100% - ${drawerWidth}px)` },
+          ml: { sm: `${drawerWidth}px` },
+          backgroundColor: '#fff', 
+          color: '#000', 
+          boxShadow: '0 1px 4px rgba(0,0,0,0.1)'
+        }}
+      >
+        <Toolbar>
+          <IconButton
+            color="inherit"
+            aria-label="open drawer"
+            edge="start"
+            onClick={handleDrawerToggle}
+            sx={{ mr: 2, display: { sm: 'none' } }}
+          >
+            <MenuIcon />
+          </IconButton>
+          <Box sx={{ flexGrow: 1 }} />
+          <Notifications />
+        </Toolbar>
+      </AppBar>
+      <Box
+        component="nav"
+        sx={{ width: { sm: drawerWidth }, flexShrink: { sm: 0 } }}
+        aria-label="mailbox folders"
+      >
+        <Drawer
+          variant="temporary"
+          open={mobileOpen}
+          onClose={handleDrawerToggle}
+          ModalProps={{
+            keepMounted: true, // Better open performance on mobile.
+          }}
+          sx={{
+            display: { xs: 'block', sm: 'none' },
+            '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth, backgroundColor: '#111827', color: '#E5E7EB' },
+          }}
+        >
+          {drawer}
+        </Drawer>
+        <Drawer
+          variant="permanent"
+          sx={{
+            display: { xs: 'none', sm: 'block' },
+            '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth, backgroundColor: '#111827', color: '#E5E7EB' },
+          }}
+          open
+        >
+          {drawer}
+        </Drawer>
+      </Box>
       <Box
         component="main"
-        sx={{ flexGrow: 1, bgcolor: '#F0F2F5', height: '100vh', overflow: 'auto' }}
+        sx={{ flexGrow: 1, p: 3, width: { sm: `calc(100% - ${drawerWidth}px)` }, bgcolor: '#F0F2F5', height: '100vh', overflow: 'auto' }}
       >
-        <AppBar position="fixed" sx={{ width: `calc(100% - ${drawerWidth}px)`, ml: `${drawerWidth}px`, backgroundColor: '#fff', color: '#000', boxShadow: '0 1px 4px rgba(0,0,0,0.1)' }}>
-            <Toolbar>
-                <Box sx={{ flexGrow: 1 }} />
-                <Notifications />
-            </Toolbar>
-        </AppBar>
-        <Box sx={{ p: 3, mt: 8 }}>
-            <Outlet />
-        </Box>
+        <Toolbar />
+        <Outlet />
       </Box>
     </Box>
   );
