@@ -37,7 +37,8 @@ public class GroupService {
                 .groupName(request.getGroupName())
                 .description(request.getDescription())
                 .groupType(request.getGroupType())
-                .user(owner)
+                .user(owner) // Set user for Parent Account entity
+                .owner(owner) // Set owner for AccountGroup entity
                 .maxAccounts(request.getMaxAccounts())
                 .build();
         
@@ -116,6 +117,13 @@ public class GroupService {
     public AccountGroup getGroupById(Long groupId) {
         return accountGroupRepository.findById(groupId)
                 .orElseThrow(() -> new IllegalArgumentException("المجموعة غير موجودة: " + groupId));
+    }
+
+    /**
+     * الحصول على كل المجموعات
+     */
+    public List<AccountGroup> getAllGroups() {
+        return accountGroupRepository.findAll();
     }
     
     /**

@@ -5,7 +5,8 @@ public enum AccountType {
     CHECKING("حساب جاري"),
     LOAN("حساب قرض"),
     INVESTMENT("حساب استثمار"),
-    BUSINESS("حساب تجاري");
+    BUSINESS("حساب تجاري"),
+    ACCOUNT_GROUP("مجموعة حسابات");
 
     private final String arabicName;
 

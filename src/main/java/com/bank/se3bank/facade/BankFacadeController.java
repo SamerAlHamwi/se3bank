@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/banking")
 @RequiredArgsConstructor
-@Tag(name = "الخدمات البنكية المبسطة", 
+@Tag(name = "الخدمات البنكية",
      description = "واجهة مبسطة للعمليات البنكية المعقدة (Facade Pattern)")
 public class BankFacadeController {
     

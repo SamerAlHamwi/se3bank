@@ -31,6 +31,13 @@ public class GroupController {
         return ResponseEntity.status(HttpStatus.CREATED).body(group);
     }
 
+    @GetMapping
+    @Operation(summary = "كل المجموعات", description = "الحصول على جميع المجموعات في النظام")
+    public ResponseEntity<List<AccountGroup>> getAllGroups() {
+        List<AccountGroup> groups = groupService.getAllGroups();
+        return ResponseEntity.ok(groups);
+    }
+
     @GetMapping("/{groupId}")
     @Operation(summary = "الحصول على مجموعة", description = "الحصول على معلومات مجموعة بواسطة ID")
     public ResponseEntity<AccountGroup> getGroup(@PathVariable Long groupId) {

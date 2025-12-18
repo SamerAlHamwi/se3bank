@@ -32,6 +32,11 @@ import ManagerAccountsList from './pages/manager/ManagerAccountsList';
 import EditAccount from './pages/manager/EditAccount';
 import AllUsers from './pages/manager/AllUsers';
 import AllTransactions from './pages/manager/AllTransactions';
+import AllGroups from './pages/manager/AllGroups';
+import CreateGroup from './pages/manager/CreateGroup';
+import GroupDetailsPage from './pages/manager/GroupDetailsPage';
+import UserDetails from './pages/manager/UserDetails';
+import ManagerFeatures from './pages/manager/ManagerFeatures'; // Import the new component
 
 
 const theme = createTheme({
@@ -106,7 +111,12 @@ function App() {
             <Route path="edit-account/:accountId" element={<EditAccount />} />
             <Route path="check-account" element={<CheckAccount />} />
             <Route path="all-users" element={<AllUsers />} />
+            <Route path="user/:userId" element={<UserDetails />} />
             <Route path="all-transactions" element={<AllTransactions />} />
+            <Route path="all-groups" element={<AllGroups />} />
+            <Route path="create-group" element={<CreateGroup />} />
+            <Route path="groups/:groupId" element={<GroupDetailsPage />} />
+            <Route path="features" element={<ManagerFeatures />} /> {/* Add this route */}
         </Route>
 
       </Routes>

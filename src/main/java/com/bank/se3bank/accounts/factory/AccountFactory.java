@@ -31,6 +31,7 @@ public class AccountFactory {
             case LOAN -> createLoanAccount(request, user);
             case INVESTMENT -> createInvestmentAccount(request, user);
             case BUSINESS -> createBusinessAccount(request, user);
+            case ACCOUNT_GROUP -> throw new UnsupportedOperationException("يجب إنشاء المجموعات عبر GroupService");
         };
 
         // تعيين الخصائص العامة
@@ -168,6 +169,7 @@ public class AccountFactory {
             case LOAN -> "LON";
             case INVESTMENT -> "INV";
             case BUSINESS -> "BUS";
+            case ACCOUNT_GROUP -> "GRP";
         };
         
         String timestamp = String.valueOf(System.currentTimeMillis() % 1000000);

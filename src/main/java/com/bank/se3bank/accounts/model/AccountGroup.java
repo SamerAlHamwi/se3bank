@@ -15,6 +15,7 @@ import java.util.stream.Collectors;
 
 @Entity
 @Table(name = "account_groups")
+@DiscriminatorValue("ACCOUNT_GROUP")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -139,7 +140,7 @@ public class AccountGroup extends Account {
     
     @Override
     public AccountType getAccountType() {
-        return AccountType.valueOf(groupType);
+        return AccountType.ACCOUNT_GROUP;
     }
     
     // ========== Group Specific Methods ==========

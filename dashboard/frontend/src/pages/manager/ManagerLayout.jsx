@@ -3,7 +3,7 @@ import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { AppBar, Box, Drawer, List, ListItem, ListItemIcon, ListItemText, Toolbar, Typography, Avatar, ListItemButton, Divider, IconButton } from '@mui/material';
 import {
   Home, SwapHoriz, Receipt, Payment, SyncAlt, PersonAdd, People, FactCheck, 
-  AccountBalanceWallet, CallMade, CallReceived, PlaylistAddCheck, Logout, Menu as MenuIcon, Group
+  AccountBalanceWallet, CallMade, CallReceived, PlaylistAddCheck, Logout, Menu as MenuIcon, Group, GroupWork, Star
 } from '@mui/icons-material';
 import { Link } from 'react-router-dom';
 import Notifications from '../../components/Notifications';
@@ -25,6 +25,8 @@ const managerActions = [
   { text: 'كل الحسابات', icon: <People />, path: '/manager/all-accounts' },
   { text: 'التحقق من حساب', icon: <FactCheck />, path: '/manager/check-account' },
   { text: 'كل المستخدمين', icon: <Group />, path: '/manager/all-users' },
+  { text: 'كل المجموعات', icon: <GroupWork />, path: '/manager/all-groups' },
+  { text: 'الميزات الإضافية', icon: <Star />, path: '/manager/features' },
   { text: 'كل المعاملات', icon: <AccountBalanceWallet />, path: '/manager/all-transactions' },
 ];
 
@@ -119,14 +121,6 @@ const ManagerLayout = () => {
         position="fixed"
         sx={{
           width: { sm: `calc(100% - ${drawerWidth}px)` },
-          // Removed ml here, handled by mr for RTL if needed, but usually AppBar spans full width or is offset.
-          // Since it's RTL, we usually push from right.
-          // But standard MUI Drawer "permanent" pushes content.
-          // Let's rely on MUI's Drawer behavior or adjust margin manually.
-          // For RTL layout (direction: 'rtl' in theme), the drawer should be on the right.
-          // So we need mr: { sm: `${drawerWidth}px` } for the AppBar if it shouldn't cover drawer,
-          // OR usually AppBar is zIndex higher than Drawer (clipped) or Drawer is zIndex higher.
-          // Let's assume Drawer is side-by-side.
           mr: { sm: `${drawerWidth}px` }, 
           ml: { sm: 0 },
           backgroundColor: '#fff', 
@@ -189,8 +183,6 @@ const ManagerLayout = () => {
           flexGrow: 1, 
           p: 3, 
           width: { sm: `calc(100% - ${drawerWidth}px)` }, 
-          // Since the drawer is on the RIGHT (anchor="right"), we must add margin-right to the main content
-          // so it doesn't get covered by the fixed drawer.
           mr: { sm: `${drawerWidth}px` }, 
           ml: { sm: 0 },
           bgcolor: '#F0F2F5', 

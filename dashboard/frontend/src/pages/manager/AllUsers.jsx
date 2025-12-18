@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, CircularProgress, Alert, Chip, useTheme, useMediaQuery } from '@mui/material';
+import { Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, CircularProgress, Alert, Chip, useTheme, useMediaQuery, IconButton, Tooltip } from '@mui/material';
 import api from '../../services/api';
-import { Person } from '@mui/icons-material';
+import { Person, Visibility } from '@mui/icons-material';
+import { Link } from 'react-router-dom';
 
 const AllUsers = () => {
     const [users, setUsers] = useState([]);
@@ -14,9 +15,6 @@ const AllUsers = () => {
         const fetchUsers = async () => {
             try {
                 const response = await api.get('/users');
-                // Sorting should be handled by backend if possible, or here if list is small.
-                // Assuming backend returns list. We can sort by ID desc or created date if available to show newest.
-                // For users, usually just listing them is fine. If needed, sort by userId desc (newest first)
                 const sortedUsers = response.data.sort((a, b) => b.userId - a.userId);
                 setUsers(sortedUsers);
                 setError('');
@@ -66,12 +64,13 @@ const AllUsers = () => {
                                 {!isMobile && <TableCell sx={{ fontWeight: 'bold', bgcolor: '#f9fafb' }}>البريد الإلكتروني</TableCell>}
                                 <TableCell sx={{ fontWeight: 'bold', bgcolor: '#f9fafb' }}>الأدوار</TableCell>
                                 <TableCell sx={{ fontWeight: 'bold', bgcolor: '#f9fafb' }}>الحالة</TableCell>
+                                <TableCell sx={{ fontWeight: 'bold', bgcolor: '#f9fafb' }}>الإجراءات</TableCell>
                             </TableRow>
                         </TableHead>
                         <TableBody>
                             {users.map((user) => (
-                                <TableRow key={user.userId} hover>
-                                    <TableCell>{user.userId}</TableCell>
+                                <TableRow key={user.id} hover>
+                                    <TableCell>{user.id}</TableCell>
                                     <TableCell sx={{ fontWeight: 500 }}>{user.username}</TableCell>
                                     <TableCell>{user.firstName} {user.lastName}</TableCell>
                                     {!isMobile && <TableCell>{user.email}</TableCell>}
@@ -96,6 +95,18 @@ const AllUsers = () => {
                                             size="small"
                                             sx={{ fontWeight: 'bold' }}
                                         />
+                                    </TableCell>
+                                    <TableCell>
+                                        <Tooltip title="عرض التفاصيل">
+                                            <IconButton 
+                                                component={Link} 
+                                                to={`/manager/user/${user.id}`}
+                                                color="primary"
+                                                size="small"
+                                            >
+                                                <Visibility />
+                                            </IconButton>
+                                        </Tooltip>
                                     </TableCell>
                                 </TableRow>
                             ))}
