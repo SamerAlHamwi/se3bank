@@ -1,8 +1,10 @@
 package com.bank.se3bank.accounts.controller;
 
 import com.bank.se3bank.accounts.decorators.AccountDecorator;
+import com.bank.se3bank.accounts.decorators.DecoratorFactory;
 import com.bank.se3bank.accounts.service.DecoratorService;
 import com.bank.se3bank.shared.dto.AddDecoratorRequest;
+import com.bank.se3bank.shared.dto.DecoratorTypeDTO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -20,6 +22,7 @@ import java.util.List;
 public class DecoratorController {
     
     private final DecoratorService decoratorService;
+    private final DecoratorFactory decoratorFactory;
     
     @PostMapping
     @Operation(summary = "إضافة ديكور لحساب", 
@@ -75,14 +78,7 @@ public class DecoratorController {
     @GetMapping("/info")
     @Operation(summary = "معلومات الديكورات", 
                description = "الحصول على معلومات عن أنواع الديكورات المتاحة")
-    public ResponseEntity<String> getDecoratorsInfo() {
-        // في تطبيق حقيقي، نرجع DTO بدلاً من String
-        String info = """
-                أنواع الديكورات المتاحة:
-                1. OVERDRAFT_PROTECTION - حماية السحب على المكشوف
-                2. INSURANCE - تأمين على الحساب
-                3. PREMIUM_SERVICES - خدمات مميزة (GOLD, PLATINUM, DIAMOND)
-                """;
-        return ResponseEntity.ok(info);
+    public ResponseEntity<List<DecoratorTypeDTO>> getDecoratorsInfo() {
+        return ResponseEntity.ok(decoratorFactory.getAvailableDecoratorTypes());
     }
 }

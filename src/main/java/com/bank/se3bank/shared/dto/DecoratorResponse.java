@@ -23,20 +23,19 @@ public class DecoratorResponse {
     private LocalDateTime deactivatedAt;
     private String accountNumber;
     private String accountType;
-    
+
     public static DecoratorResponse fromEntity(AccountDecorator decorator) {
         return DecoratorResponse.builder()
                 .id(decorator.getId())
                 .decoratorName(decorator.getDecoratorName())
-                .decoratorType(decorator.getClass().getSimpleName())
+                .decoratorType(decorator.getClass().getSimpleName()) // e.g. "InsuranceDecorator"
                 .description(decorator.getDescription())
                 .monthlyFee(decorator.getMonthlyFee())
                 .isActive(decorator.getIsActive())
                 .activatedAt(decorator.getActivatedAt())
                 .deactivatedAt(decorator.getDeactivatedAt())
                 .accountNumber(decorator.getOriginalAccountNumber())
-                .accountType(decorator.getAccountType() != null ? 
-                        decorator.getAccountType().name() : "UNKNOWN")
+                .accountType(decorator.getAccountType()) // This now returns a String directly
                 .build();
     }
 }
